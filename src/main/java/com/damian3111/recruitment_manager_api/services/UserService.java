@@ -16,6 +16,6 @@ public class UserService {
     }
 
     public UserEntity getUserByEmail(String email) {
-        return userRepository.findUserEntityByEmail(user.getEmail()).orElseThrow();
+        return userRepository.findUserEntityByEmail(email).orElseThrow();
     }
 }
