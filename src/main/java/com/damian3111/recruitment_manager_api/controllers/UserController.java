@@ -23,6 +23,7 @@ public class UserController implements UsersApi {
     public ResponseEntity<User> addUser(@RequestBody User user) {
         UserEntity build = UserEntity.builder()
                 .email(user.getEmail())
+                .password(user.getPassword())
                 .firstName(user.getFirstName())
                 .lastName(user.getLastName())
                 .role(modelMapper.map(user.getUserRole(), UserRole.class))
