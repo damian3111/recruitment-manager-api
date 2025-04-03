@@ -1,54 +1,94 @@
 openapi: 3.0.3
 info:
-  title: Banking API Specification for account operations
+  title: Recruitment Manager Api - OpenAPI 3.0.3
   description: |-
-    A simple banking API that allows two operations:
-    - get account balance given account number
-    - deposit amount to a account
-  version: 1.0-SNAPSHOT
+    Recruitment Manager Api OpenAPI 3.0.3 specification.
+  license:
+    name: Proprietary Licensing
+  version: 1.0.0
 servers:
-  - url: https://testenvironment.org/api/v1
-  - url: https://prodenvironment.org/api/v1
+  - url: http://localhost:8080/api
 tags:
-  - name: accounts
-    description: Operations between bank accounts
+  - name: users
+    description: Everything about Users
+
 paths:
-  /account:
-    get:
+  /users:
+    post:
+      summary: Add new user
+      operationId: addUser
       tags:
-        - accounts
-      summary: Get account information
-      description: Get account information using account number
-      operationId: getAccount
+        - users
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
       responses:
-        200:
-          description: Success
+        '201':
+          description: User added
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Account'
-        404:
-          description: Account not found
+                $ref: "#/components/schemas/User"
+
+  /users/{email}:  # Changed from '/get-user/{email}' to match '/users'
+    get:
+      summary: Get user by email
+      operationId: getUserByEmail  # Changed operationId for clarity
+      tags:
+        - users
+      parameters:
+        - name: email
+          in: path
+          required: true
+          description: Email of the user to retrieve
+          schema:
+            type: string
+      responses:
+        '200':
+          description: User retrieved successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AccountNotFoundError'
+                $ref: "#/components/schemas/User"
+        '404':
+          description: User not found
+
 components:
   schemas:
-    Account:
+    UserRole:
+      type: string
+      enum:
+        - recruiter
+        - recruited
+    User:
       type: object
       properties:
-        balance:
+        id:
           type: number
-    AccountNotFoundError:
+        firstName:
+          type: string
+        lastName:
+          type: string
+        email:
+          type: string
+        password:
+          type: string
+        username:
+          type: string
+        userRole:
+          $ref: '#/components/schemas/UserRole'
+    LoginUserDto:
       type: object
       properties:
-        message:
+        email:
           type: string
-    DepositRequest:
-      type: object
-      properties:
-        accountNumber:
+          format: email
+        password:
           type: string
-        depositAmount:
-          type: number
+          format: password
+      required:
+        - email
+        - password
