@@ -8,23 +8,20 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.GrantedAuthoritiesContainer;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.servlet.HandlerExceptionResolver;
 
 import java.io.IOException;
-import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.List;
 
@@ -33,7 +30,10 @@ import java.util.List;
 public class JWTAuthFilter extends OncePerRequestFilter {
 
     private final JWTService jwtService;
-    private final UserDetailsService userDetailsService;
+    @Lazy
+    @Autowired
+    private HandlerExceptionResolver handlerExceptionResolver;
+
     private final List<String> excludedPaths = List.of("/api/login", "/api/register");
 
     @Override
@@ -62,29 +62,24 @@ public class JWTAuthFilter extends OncePerRequestFilter {
 
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
-            if (userEmail != null && authentication == null) {
-//                UserDetails userDetails = this.userDetailsService.loadUserByUsername(userEmail);
+            if (jwtService.isTokenValid(jwt) && authentication == null) {
 
-                if (jwtService.isTokenValid(jwt)) {
                     UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                             userEmail,
                             null,
-                            new HashSet<GrantedAuthority>(List.of(new SimpleGrantedAuthority(userRole)))
-                    );
+                            new HashSet<GrantedAuthority>(List.of(new SimpleGrantedAuthority(userRole))));
 
                     authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                     SecurityContextHolder.getContext().setAuthentication(authToken);
                 }
-            }
-
             filterChain.doFilter(request, response);
         } catch (Exception exception) {
-//            handlerExceptionResolver.resolveException(request, response, null, exception);
+           handlerExceptionResolver.resolveException(request, response, null, exception);
         }
     }
 
     @Override
-    protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
+    protected boolean shouldNotFilter(HttpServletRequest request){
         return excludedPaths.contains(request.getRequestURI());
     }
 }
