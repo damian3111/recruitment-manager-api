@@ -7,11 +7,12 @@ info:
     name: Proprietary Licensing
   version: 1.0.0
 servers:
-  - url: http://localhost:8080/api
+  - url: http://localhost:8080
 tags:
   - name: users
     description: Everything about Users
-
+  - name: jobs
+    description: Everything about Job postings
 paths:
   /users:
     post:
@@ -55,6 +56,21 @@ paths:
                 $ref: "#/components/schemas/User"
         '404':
           description: User not found
+  /jobs:
+    get:
+      summary: Get all job postings
+      operationId: getAllJobs
+      tags:
+        - jobs
+      responses:
+        '200':
+          description: List of job postings
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/JobDto'
 
 components:
   schemas:
@@ -92,3 +108,16 @@ components:
       required:
         - email
         - password
+    JobDto:
+      type: object
+      properties:
+        id:
+          type: number
+        title:
+          type: string
+        description:
+          type: string
+        location:
+          type: string
+        salary:
+          type: number
