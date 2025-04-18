@@ -34,7 +34,7 @@ public class JWTAuthFilter extends OncePerRequestFilter {
     @Autowired
     private HandlerExceptionResolver handlerExceptionResolver;
 
-    private final List<String> excludedPaths = List.of("/api/login", "/api/register");
+    private final List<String> excludedPaths = List.of("/login", "/register");
 
     @Override
     protected void doFilterInternal(
