@@ -23,12 +23,12 @@ public class TestController {
     private final JWTService jwtService;
     private final UserService userService;
     
-    @GetMapping("api/test")
+    @GetMapping("/test")
     public String helloWorld(){
         return "hello world!";
     }
 
-    @PostMapping("/api/register")
+    @PostMapping("/register")
     public String helloWorld2(@RequestBody User user){
         System.out.println(user);
         System.out.println(user.getEmail());
@@ -38,7 +38,7 @@ public class TestController {
         return "hello world!";
     }
 
-    @PostMapping("/api/login")
+    @PostMapping("/login")
     public ResponseEntity<String> helloWorld22(@RequestBody LoginUserDto loginUserDto, HttpServletResponse response){
         UserEntity userEntity = userService.authenticate(loginUserDto);
         HashMap<String, Object> claims = new HashMap<>();
