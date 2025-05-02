@@ -34,7 +34,7 @@ public class JobEntity {
     private String responsibilities;
 
     @Column(name = "employment_type")
-    private String employmentType; // e.g., Full-time, Contract
+    private String employmentType;
 
     @Column(nullable = false)
     private String location;
@@ -49,7 +49,7 @@ public class JobEntity {
     private String currency;
 
     @Column(name = "experience_level")
-    private String experienceLevel; // e.g., Junior, Mid, Senior
+    private String experienceLevel;
 
     @Column
     private String industry;
@@ -58,7 +58,7 @@ public class JobEntity {
     private String companyName;
 
     @Column(length = 1000)
-    private String benefits; 
+    private String benefits;
 
     @Column(name = "employment_mode")
     private String employmentMode;
