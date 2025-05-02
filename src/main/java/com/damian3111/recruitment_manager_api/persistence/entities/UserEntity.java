@@ -39,6 +39,8 @@ public class UserEntity implements UserDetails {
     @Column(nullable = false)
     private String password;
 
+    private boolean isEmailConfirmed;
+
     @CreationTimestamp
     @Column(updatable = false, name = "created_at")
     private Date createdAt;
