@@ -58,10 +58,10 @@ public class JobEntity {
     private String companyName;
 
     @Column(length = 1000)
-    private String benefits; // JSON as string or mapped as a separate entity in the future
+    private String benefits; 
 
     @Column(name = "employment_mode")
-    private String employmentMode; // e.g., Remote, Hybrid, On-site
+    private String employmentMode;
 
     @Column(name = "posted_date")
     private LocalDate postedDate;
@@ -76,5 +76,6 @@ public class JobEntity {
     @OneToMany(mappedBy = "job")
     private List<InvitationEntity> invitationsSent = new ArrayList<>();
 
-
+    @OneToMany(mappedBy = "job", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<JobSkill> skills = new ArrayList<>();
 }
