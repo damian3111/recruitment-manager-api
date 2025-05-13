@@ -7,6 +7,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
@@ -50,6 +51,9 @@ public class UserEntity implements UserDetails {
     @JoinColumn(name = "company_id")
     private CompanyEntity company;
 
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<JobEntity> jobs;
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of();
@@ -79,4 +83,5 @@ public class UserEntity implements UserDetails {
     public boolean isEnabled() {
         return true;
     }
+
 }
