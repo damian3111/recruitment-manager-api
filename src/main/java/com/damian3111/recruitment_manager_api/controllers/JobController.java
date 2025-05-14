@@ -44,8 +44,9 @@ public class JobController implements JobsApi {
                 this.getSpecification(jobFilter),
                 pageable
         );
+        JobsPage map = this.modelMapper.map(entityPage, JobsPage.class);
 //        affiliationService.setAffiliationPositions(entityPage.getContent());
-        return ResponseEntity.ok(this.modelMapper.map(entityPage, JobsPage.class));    }
+        return ResponseEntity.ok(map);    }
 
     @Override
     public ResponseEntity<List<JobDto>> getJobsByUserId(Long userId) {
@@ -142,6 +143,9 @@ public class JobController implements JobsApi {
                         .orElse(factory.empty()))
                 .and(Optional.ofNullable(filter.getApplicationDeadline())
                         .map(v -> factory.propertyLikeIgnoreCase("applicationDeadline", v.toString()))
+                        .orElse(factory.empty()))
+                .and(Optional.ofNullable(filter.getSkills())
+                        .map(v -> factory.propertyInSkills(filter.getSkills())) // Use new skills specification
                         .orElse(factory.empty()));
     }
 }
