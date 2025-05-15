@@ -27,5 +27,25 @@ public class CandidatesSpecification implements BaseSpecification<CandidateEntit
 //    }
 
 
+    public Specification<CandidateEntity> beforeAppliedDate(String path, LocalDate search) {
+        return (root, cq, cb) -> {
+            Path<?> pathToDate = this.resolvePathToObject(root, path);
+            return this.getPredicateBeforeAppliedDate(cb, (Path<LocalDate>)pathToDate, search);
+        };
+    }
 
+    public Specification<CandidateEntity> afterAppliedDate(String path, LocalDate search) {
+        return (root, cq, cb) -> {
+            Path<?> pathToDate = this.resolvePathToObject(root, path);
+            return this.getPredicateAfterAppliedDate(cb, (Path<LocalDate>)pathToDate, search);
+        };
+    }
+
+    private Predicate getPredicateBeforeAppliedDate(CriteriaBuilder cb, Path<LocalDate> path, LocalDate search) {
+        return cb.lessThanOrEqualTo(path, search);
+    }
+
+    private Predicate getPredicateAfterAppliedDate(CriteriaBuilder cb, Path<LocalDate> path, LocalDate search) {
+        return cb.greaterThanOrEqualTo(path, search);
+    }
 }
