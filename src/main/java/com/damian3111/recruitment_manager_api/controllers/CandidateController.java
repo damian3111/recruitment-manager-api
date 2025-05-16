@@ -94,8 +94,6 @@ public class CandidateController implements CandidatesApi {
         return ResponseEntity.ok(modelMapper.map(candidateService.updateCandidate(id, modelMapper.map(candidateDto, CandidateEntity.class)), CandidateDto.class));
     }
 
-
-
     private Specification<CandidateEntity> getSpecification(CandidateFilter filter) {
         CandidatesSpecification factory = this.candidatesSpecification;
 //        CompanyEntity company = userEntityService.findByUsername(SecurityContextHolder.getContext().getAuthentication().getName()).getCompany();
