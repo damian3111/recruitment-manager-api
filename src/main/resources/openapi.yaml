@@ -304,6 +304,31 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/JobDto'
+  /jobs/filter:
+    post:
+      summary: Filter jobs
+      operationId: filterJobs
+      tags:
+        - jobs
+      parameters:
+        - in: query
+          name: pageable
+          required: false
+          schema:
+            $ref: '#/components/schemas/Pageable'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JobFilter'
+      responses:
+        '200':
+          description: List of filtered jobs
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobsPage'
   /jobs/user/{userId}:
     get:
       summary: Get all job postings created by a specific user
@@ -727,6 +752,19 @@ components:
         totalPages:
           type: integer
           format: int64
+    JobsPage:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: "#/components/schemas/JobDto"
+        totalElements:
+          type: integer
+          format: int64
+        totalPages:
+          type: integer
+          format: int64
     CandidateFilter:
       type: object
       properties:
@@ -768,6 +806,40 @@ components:
           type: string
         skills:
           type: string
+      required: [ ]
+    JobFilter:
+      type: object
+      properties:
+        title:
+          type: string
+        employment_type:
+          type: string
+        location:
+          type: string
+        salary_min:
+          type: integer
+        salary_max:
+          type: integer
+        currency:
+          type: string
+        experience_level:
+          type: string
+        industry:
+          type: string
+        company_name:
+          type: string
+        employment_mode:
+          type: string
+          enum:
+            - Remote
+            - Hybrid
+            - Onsite
+        posted_date:
+          type: string
+          format: date
+        application_deadline:
+          type: string
+          format: date
       required: [ ]
     Pageable:
       description: minimal Pageable query parameters
