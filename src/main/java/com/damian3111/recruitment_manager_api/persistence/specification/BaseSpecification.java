@@ -59,7 +59,7 @@ public interface BaseSpecification <T, K> {
     }
 
     default Predicate getPredicateLikeIgnoreCase(CriteriaBuilder cb, Path<?> path, String search) {
-        if (path.getJavaType().equals(LocalDateTime.class)) {
+        if (path.getJavaType().equals(LocalDate.class)) {
             Expression<String> dateStringExpr = cb.function("TO_CHAR", String.class, path, cb.literal("'YYYY-MM-DD HH24:MI'"));
             return cb.like(cb.lower(dateStringExpr), this.getLowerCaseSearchTerm(search));
         } else {
