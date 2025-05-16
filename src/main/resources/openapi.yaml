@@ -13,6 +13,8 @@ tags:
     description: Everything about Users
   - name: jobs
     description: Everything about Job postings
+  - name: candidates
+    description: Everything about Job Candidates
 paths:
   /users:
     post:
@@ -56,6 +58,219 @@ paths:
                 $ref: "#/components/schemas/User"
         '404':
           description: User not found
+  /users/me:
+    get:
+      summary: Get currently authenticated user
+      operationId: getCurrentUser
+      tags:
+        - users
+      security:
+        - bearerAuth: [ ]  # Use this if you're securing the route with JWT
+      responses:
+        '200':
+          description: Authenticated user details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          description: Unauthorized
+  /invitations:
+    get:
+      summary: List of invitations
+      operationId: getAllInvitations
+      tags:
+        - invitations
+      responses:
+        '200':
+          description: List of invitations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/InvitationDto'
+
+    post:
+      summary: Send a new invitation
+      operationId: sendInvitation
+      tags:
+        - invitations
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InvitationDto'
+      responses:
+        '201':
+          description: Invitation created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InvitationDto'
+  /invitations/{id}:
+    delete:
+      summary: Delete invitation by ID
+      operationId: deleteInvitation
+      tags:
+        - invitations
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the invitation
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Invitation deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Invitation has been deleted
+        '404':
+          description: Invitation not found
+  /invitations/candidate/{candidateId}:
+    get:
+      summary: Get invitations by candidate ID
+      operationId: getInvitationsByCandidateId
+      tags:
+        - invitations
+      parameters:
+        - name: candidateId
+          in: path
+          required: true
+          description: ID of the candidate
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: List of invitations for candidate
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/InvitationDto'
+  /invitations/recruiter/{recruiterId}:
+    get:
+      summary: Get invitations by recruiter ID
+      operationId: getInvitationsByRecruiterId
+      tags:
+        - invitations
+      parameters:
+        - name: recruiterId
+          in: path
+          required: true
+          description: ID of the recruiter
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: List of invitations for recruiter
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/InvitationDto'
+  /invitations/by-candidate-and-recruiter:
+    get:
+      summary: Get invitations by candidate ID and recruiter ID
+      operationId: getInvitationsByCandidateAndRecruiter
+      tags:
+        - invitations
+      parameters:
+        - name: candidateId
+          in: query
+          required: true
+          description: ID of the candidate
+          schema:
+            type: integer
+            format: int64
+        - name: recruiterId
+          in: query
+          required: true
+          description: ID of the recruiter
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: List of matching invitations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/InvitationDto'
+  /invitations/{id}/status:
+    patch:
+      summary: Update invitation status
+      operationId: updateInvitationStatus
+      tags:
+        - invitations
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the invitation
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  $ref: '#/components/schemas/InvitationStatus'
+      responses:
+        '200':
+          description: Invitation status updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InvitationDto'
+        '400':
+          description: Invalid status
+        '404':
+          description: Invitation not found
+  /invitations/received-by-recruiter:
+    get:
+      summary: Get invitations where job's user ID matches a given value
+      operationId: getInvitationsByJobUserId
+      tags:
+        - invitations
+      parameters:
+        - name: userId
+          in: query
+          required: true
+          description: ID of the user who owns the job
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: List of matching invitations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/InvitationDto'
+        '404':
+          description: No invitations found
   /jobs:
     get:
       summary: Get all job postings
@@ -71,8 +286,262 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/JobDto'
+    post:
+      summary: Create a new job
+      operationId: createJob
+      tags:
+        - jobs
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JobDto'
+      responses:
+        '201':
+          description: Job created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobDto'
+  /jobs/user/{userId}:
+    get:
+      summary: Get all job postings created by a specific user
+      operationId: getJobsByUserId
+      tags:
+        - jobs
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: List of job postings by the user
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/JobDto'
+        '404':
+          description: User not found
+  /jobs/{id}:
+    get:
+      summary: Get job by ID
+      operationId: getJobById
+      tags:
+        - jobs
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Job details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobDto'
+        '404':
+          description: Job not found
+    put:
+      summary: Update an existing job
+      operationId: updateJob
+      tags:
+        - jobs
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JobDto'
+      responses:
+        '200':
+          description: Job updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobDto'
+        '404':
+          description: Job not found
+    delete:
+      summary: Delete a job
+      operationId: deleteJob
+      tags:
+        - jobs
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '204':
+          description: Job deleted successfully
+        '404':
+          description: Job not found
+  /candidates:
+    get:
+      summary: Get all candidates
+      operationId: getAllCandidates
+      tags:
+        - candidates
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CandidateFilter'
+      responses:
+        '200':
+          description: List of candidates
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CandidateDto'
 
+    post:
+      summary: Add a new candidate
+      operationId: addCandidate
+      tags:
+        - candidates
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CandidateDto'
+      responses:
+        '201':
+          description: Candidate created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CandidateDto'
+  /candidates/filter:
+    post:
+      summary: Filter candidates
+      operationId: filterCandidates
+      tags:
+        - candidates
+      parameters:
+        - in: query
+          name: pageable
+          required: false
+          schema:
+            $ref: '#/components/schemas/Pageable'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CandidateFilter'
+      responses:
+        '200':
+          description: List of filtered candidates
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CandidatesPage'
+  /candidates/{id}:
+    get:
+      summary: Get candidate by ID
+      operationId: getCandidateById
+      tags:
+        - candidates
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the candidate
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Candidate found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CandidateDto'
+        '404':
+          description: Candidate not found
+  /candidates/by-email:
+    get:
+      summary: Get candidate by email
+      operationId: getCandidateByEmail
+      tags:
+        - candidates
+      parameters:
+        - name: email
+          in: query
+          required: true
+          description: Email of the candidate
+          schema:
+            type: string
+            format: email
+      responses:
+        '200':
+          description: Candidate found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CandidateDto'
+        '404':
+          description: Candidate not found
+  /candidates/update/{id}:
+    put:
+      summary: Update an existing candidate
+      operationId: updateCandidate
+      tags:
+        - candidates
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the candidate to update
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CandidateDto'
+      responses:
+        '200':
+          description: Candidate updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CandidateDto'
+        '400':
+          description: Invalid input
+        '404':
+          description: Candidate not found
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
   schemas:
     UserRole:
       type: string
@@ -108,16 +577,205 @@ components:
       required:
         - email
         - password
-    JobDto:
+    InvitationStatus:
+      type: string
+      enum:
+        - sent
+        - accepted
+        - declined
+    InvitationDto:
       type: object
       properties:
         id:
-          type: number
+          type: integer
+          format: int64
+        recruiter_id:
+          type: integer
+          format: int64
+        candidate_id:
+          type: integer
+          format: int64
+        job_id:
+          type: integer
+          format: int64
+        status:
+          $ref: '#/components/schemas/InvitationStatus'
+        created_at:
+          type: string
+          format: date-time
+    JobDto:
+      type: object
+      required:
+        - title
+        - description
+        - location
+        - employment_type
+        - experience_level
+        - company
+      properties:
+        id:
+          type: integer
+          format: int64
         title:
           type: string
         description:
           type: string
+        requirements:
+          type: string
+          description: Skills or qualifications required for the job
+        responsibilities:
+          type: string
+          description: Duties and tasks expected in the role
         location:
           type: string
-        salary:
+        salary_min:
           type: number
+          format: double
+        salary_max:
+          type: number
+          format: double
+        currency:
+          type: string
+          example: "USD"
+        company:
+          type: string
+          description: Company name
+        employment_type:
+          type: string
+          enum: [ Full-time, Part-time, Contract, Temporary, Internship ]
+        experience_level:
+          type: string
+          enum: [ Junior, Mid, Senior, Lead ]
+        industry:
+          type: string
+          example: "IT"
+        benefits:
+          type: string
+        employment_mode:
+          type: string
+          enum: [ Remote, Hybrid, Onsite ]
+        remote:
+          type: boolean
+          description: True if employment_mode is "Remote"
+        posted_date:
+          type: string
+          format: date
+        application_deadline:
+          type: string
+          format: date
+        user_id:
+          type: integer
+          format: int64
+    CandidateDto:
+      type: object
+      properties:
+        id:
+          type: integer
+        first_name:
+          type: string
+        last_name:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        profile_picture_url:
+          type: string
+        headline:
+          type: string
+        summary:
+          type: string
+        experience:
+          type: string
+        years_of_experience:
+          type: integer
+        education:
+          type: string
+        certifications:
+          type: string
+        work_experiences:
+          type: string
+        projects:
+          type: string
+        media_url:
+          type: string
+        salary_expectation:
+          type: string
+        work_style:
+          type: string
+          enum:
+            - Remote
+            - Hybrid
+            - On-site
+        applied_date:
+          type: string
+          format: date
+        location:
+          type: string
+        skills:
+          type: string
+    CandidatesPage:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: "#/components/schemas/CandidateDto"
+        totalElements:
+          type: integer
+          format: int64
+        totalPages:
+          type: integer
+          format: int64
+    CandidateFilter:
+      type: object
+      properties:
+        first_name:
+          type: string
+        last_name:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        headline:
+          type: string
+        min_experience:
+          type: integer
+        max_experience:
+          type: integer
+        education:
+          type: string
+        certifications:
+          type: string
+        projects:
+          type: string
+        salary_expectation:
+          type: string
+        work_style:
+          type: string
+          enum:
+            - Remote
+            - Hybrid
+            - On-site
+        applied_date_from:
+          type: string
+          format: date
+        applied_date_to:
+          type: string
+          format: date
+        location:
+          type: string
+        skills:
+          type: string
+      required: [ ]
+    Pageable:
+      description: minimal Pageable query parameters
+      type: object
+      properties:
+        page:
+          type: integer
+        size:
+          type: integer
+        sort:
+          type: string
