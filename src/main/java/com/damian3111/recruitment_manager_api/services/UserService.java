@@ -1,6 +1,7 @@
 package com.damian3111.recruitment_manager_api.services;
 
 import com.damian3111.recruitment_manager_api.persistence.entities.UserEntity;
+import com.damian3111.recruitment_manager_api.persistence.entities.UserRole;
 import com.damian3111.recruitment_manager_api.persistence.repositories.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.openapitools.model.LoginUserDto;
@@ -18,6 +19,17 @@ public class UserService {
     private final UserRepository userRepository;
     private final AuthenticationProvider authenticationProvider;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
+
+    public UserEntity loadOrCreateUserFromOAuth(String email) {
+        return userRepository.findUserEntityByEmail(email)
+                .orElseGet(() -> {
+                    UserEntity user = new UserEntity();
+                    user.setEmail(email);
+                    user.setRole(UserRole.RECRUITER);
+                    user.setPassword("testPassword");
+                    return userRepository.save(user);
+                });
+    }
 
     public UserEntity addUser(UserEntity user) {
         user.setPassword(bCryptPasswordEncoder.encode(user.getPassword()));
