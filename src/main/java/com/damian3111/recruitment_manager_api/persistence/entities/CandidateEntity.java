@@ -60,8 +60,8 @@ public class CandidateEntity {
 
     private String location;
 
-    @Column(length = 2000)
-    private String skills; // store as comma-separated string or convert to JSON string
+    @OneToMany(mappedBy = "candidate", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<CandidateSkill> skills = new ArrayList<>();
 
     @OneToMany(mappedBy = "candidate")
     private List<InvitationEntity> invitationsReceived = new ArrayList<>();
