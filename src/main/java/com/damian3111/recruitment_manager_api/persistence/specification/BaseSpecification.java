@@ -1,12 +1,16 @@
 package com.damian3111.recruitment_manager_api.persistence.specification;
 
 import com.damian3111.recruitment_manager_api.persistence.entities.CandidateEntity;
+import com.damian3111.recruitment_manager_api.persistence.entities.CandidateSkill;
+import com.damian3111.recruitment_manager_api.persistence.entities.SkillEntity;
 import jakarta.persistence.criteria.*;
+import org.openapitools.model.JobDtoSkillsInner;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public interface BaseSpecification <T, K> {
 
@@ -67,6 +71,41 @@ public interface BaseSpecification <T, K> {
         }
     }
 
+    default Specification<T> propertyInSkills(List<JobDtoSkillsInner> skills) {
+        return (root, cq, cb) -> {
+            if (skills == null || skills.isEmpty()) {
+                return cb.conjunction(); // Return true predicate for empty skills
+            }
+
+            Join<T, CandidateSkill> candidateSkillJoin = root.join("skills");
+            Join<CandidateSkill, SkillEntity> skillJoin = candidateSkillJoin.join("skill");
+
+            List<Predicate> predicates = skills.stream()
+                    .filter(skill -> skill.getName() != null) // Skip null names
+                    .map(skill -> {
+                        Predicate namePredicate = cb.equal(
+                                cb.lower(skillJoin.get("name")),
+                                skill.getName().toLowerCase()
+                        );
+
+                        // Add proficiency level filter if provided
+                        if (skill.getProficiencyLevel() != null) {
+                            return cb.and(
+                                    namePredicate,
+                                    cb.equal(
+                                            candidateSkillJoin.get("proficiencyLevel"),
+                                            skill.getProficiencyLevel().toString() // Convert enum to String
+                                    )
+                            );
+                        }
+                        return namePredicate;
+                    })
+                    .collect(Collectors.toList());
+
+            // Combine predicates with OR (match any skill)
+            return cb.or(predicates.toArray(new Predicate[0]));
+        };
+    }
     default Predicate getPredicateGreaterOrEqual(CriteriaBuilder cb, Path<?> path, Integer search) {
             return cb.greaterThanOrEqualTo(path.as(Integer.class), search);
     }
@@ -74,42 +113,7 @@ public interface BaseSpecification <T, K> {
     default Predicate getPredicateLessOrEqual(CriteriaBuilder cb, Path<?> path, Integer search) {
             return cb.lessThanOrEqualTo(path.as(Integer.class), search);
     }
-//
-//    default Specification<T> propertyIn(String path, Collection<?> list) {
-//        return (root, cq, cb) -> {
-//            Path<?> pathToObject = this.resolvePathToObject(root, path);
-//            return pathToObject.in(list);
-//        };
-//    }
-//
-//    default Specification<T> propertyNotIn(String path, Collection<?> list) {
-//        return (root, cq, cb) -> {
-//            Path<?> pathToObject = this.resolvePathToObject(root, path);
-//            return cb.not(pathToObject.in(list));
-//        };
-//    }
-//
-//    default Specification<T> joinedLeftObjectPropertyLikeIgnoreCase(String path, String search) {
-//        return (root, cq, cb) -> {
-//            Path<?> pathToObject = this.resolvePathToJoinedLeftObjectProperty(root, path);
-//            return this.getPredicateLikeIgnoreCase(cb, pathToObject, search);
-//        };
-//    }
-//
-//    default Specification<T> propertyNotNull(String path) {
-//        return (root, cq, cb) -> {
-//            Path<?> pathToObject = this.resolvePathToObject(root, path);
-//            return cb.isNotNull(pathToObject);
-//        };
-//    }
-//
-//    default Specification<T> propertyIsNull(String path) {
-//        return (root, cq, cb) -> {
-//            Path<?> pathToObject = this.resolvePathToObject(root, path);
-//            return cb.isNull(pathToObject);
-//        };
-//    }
-//
+
 
     default Path<?> resolvePathToObject(Root<T> root, String path) {
         Iterator<String> iterator = Arrays.asList(path.split("\\.")).iterator();
