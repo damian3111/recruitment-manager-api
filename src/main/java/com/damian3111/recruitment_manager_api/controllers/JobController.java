@@ -1,11 +1,13 @@
 package com.damian3111.recruitment_manager_api.controllers;
 
-import com.damian3111.recruitment_manager_api.persistence.entities.CandidateEntity;
-import com.damian3111.recruitment_manager_api.persistence.entities.JobEntity;
+import com.damian3111.recruitment_manager_api.persistence.entities.*;
 import com.damian3111.recruitment_manager_api.persistence.repositories.JobRepository;
+import com.damian3111.recruitment_manager_api.persistence.repositories.JobSkillRepository;
 import com.damian3111.recruitment_manager_api.persistence.specification.CandidatesSpecification;
 import com.damian3111.recruitment_manager_api.persistence.specification.JobSpecification;
 import com.damian3111.recruitment_manager_api.services.JobService;
+import com.damian3111.recruitment_manager_api.services.SkillService;
+import com.damian3111.recruitment_manager_api.services.UserService;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.openapitools.api.JobsApi;
@@ -14,9 +16,12 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -29,6 +34,10 @@ public class JobController implements JobsApi {
     private final JobService jobService;
     private final ModelMapper modelMapper;
     private final JobSpecification jobSpecification;
+    private final JobSkillRepository jobSkillRepository;
+    private final SkillService skillService;
+    private final UserService userService;
+
 
     @Override
     public ResponseEntity<List<JobDto>> getAllJobs() {
@@ -58,14 +67,65 @@ public class JobController implements JobsApi {
 
     @Override
     public ResponseEntity<JobDto> createJob(JobDto jobDto) {
+
         JobEntity map = modelMapper.map(jobDto, JobEntity.class);
         map.setCompanyName("sdds");
         map.setPostedDate(LocalDate.now());
         map.setApplicationDeadline(LocalDate.now());
-        JobEntity save = jobRepository.save(map);
 
-        return ResponseEntity.ok(jobDto);
+        String name = SecurityContextHolder.getContext().getAuthentication().getName();
+        UserEntity userEntity = userService.getUserByEmail(name);
+
+        HashMap<Object, Object> objectObjectHashMap = new HashMap<>();
+        ArrayList<ArrayList> skillEntities = new ArrayList<>();
+        map.setUser(userEntity);
+        map.setSkills(new ArrayList<>());
+        JobEntity jobEntity = jobRepository.save(map);
+
+        jobDto.getSkills().forEach(s -> {
+            ArrayList<Object> objects = new ArrayList<>();
+            objects.add(skillService.findByName(s.getName()));
+            objects.add(s.getProficiencyLevel().getValue());
+            skillEntities.add(objects);
+        });
+
+        ArrayList<JobSkill> jobSkills = new ArrayList<>();
+
+        skillEntities.forEach(s -> {
+            SkillEntity skill = (SkillEntity) s.get(0);
+            String proficiencyLevel = (String) s.get(1);
+//            Optional<CandidateSkill> byCandidateIdAndSkillId = jobSkillRepository.findByJobIdAndSkillId(job.getId(), skill.getId());
+//            if (byCandidateIdAndSkillId.isPresent()){
+//                candidateSkillRepository.updateProficiencyLevel(candidateEntity.getId(), skill.getId(), proficiencyLevel);
+//            }else {
+                JobSkill newSkill = JobSkill.builder()
+                        .skill(skill)
+                        .job(jobEntity)
+                        .proficiencyLevel(proficiencyLevel)
+                        .build();
+                jobSkillRepository.save(newSkill);
+//            }
+//            JobSkill jobSkill = jobSkillRepository.findByCandidateIdAndSkillId(candidateEntity.getId(), skill.getId()).orElseThrow();
+            jobSkills.add(newSkill);
+        });
+
+        List<JobSkill> skills = jobEntity.getSkills();
+        skills.clear();
+        skills.addAll(jobSkills);
+
+        return ResponseEntity.ok(null);
     }
+//
+//    @Override
+//    public ResponseEntity<JobDto> createJob(JobDto jobDto) {
+//        JobEntity map = modelMapper.map(jobDto, JobEntity.class);
+//        map.setCompanyName("sdds");
+//        map.setPostedDate(LocalDate.now());
+//        map.setApplicationDeadline(LocalDate.now());
+//        JobEntity save = jobRepository.save(map);
+//
+//        return ResponseEntity.ok(jobDto);
+//    }
 
     @Override
     public ResponseEntity<Void> deleteJob(Long id) {
@@ -74,7 +134,16 @@ public class JobController implements JobsApi {
 
     @Override
     public ResponseEntity<JobDto> getJobById(Long id) {
-        return ResponseEntity.ok(modelMapper.map(jobRepository.findById(id).orElseThrow(), JobDto.class));
+        JobEntity jobEntity = jobRepository.findById(id).orElseThrow();
+        JobDto jobDto = modelMapper.map(jobEntity, JobDto.class);
+        jobDto.setSkills(jobEntity.getSkills().stream().map(s -> {
+            JobDtoSkillsInner jobDtoSkillsInner = new JobDtoSkillsInner();
+            jobDtoSkillsInner.setName(s.getSkill().getName());
+            jobDtoSkillsInner.setProficiencyLevel(JobDtoSkillsInner.ProficiencyLevelEnum.fromValue(s.getProficiencyLevel()));
+            return jobDtoSkillsInner;
+        }).collect(Collectors.toList()));
+
+        return ResponseEntity.ok(jobDto);
     }
 
     @Override
