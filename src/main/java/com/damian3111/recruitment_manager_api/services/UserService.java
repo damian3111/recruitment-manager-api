@@ -27,6 +27,7 @@ public class UserService {
                     user.setEmail(email);
                     user.setRole(UserRole.RECRUITER);
                     user.setPassword("testPassword");
+                    user.setEmailConfirmed(true);
                     return userRepository.save(user);
                 });
     }
@@ -37,12 +38,22 @@ public class UserService {
     }
 
     public UserEntity authenticate(LoginUserDto loginUserDto) {
-        Authentication authentication = authenticationProvider.authenticate(
-                new UsernamePasswordAuthenticationToken(loginUserDto.getEmail(), loginUserDto.getPassword())
-        );
+        try {
+            Authentication authentication = authenticationProvider.authenticate(
+                    new UsernamePasswordAuthenticationToken(loginUserDto.getEmail(), loginUserDto.getPassword())
+            );
+        }catch (Exception e){
+                throw new RuntimeException("Wrong credentials");
+        }
 
-        return userRepository.findUserEntityByEmail(loginUserDto.getEmail())
+        UserEntity userEntity = userRepository.findUserEntityByEmail(loginUserDto.getEmail())
                 .orElseThrow();
+
+        if (!userEntity.isEmailConfirmed()) {
+            throw new RuntimeException("Please confirm your email before logging in.");
+        }
+
+        return userEntity;
     }
 
     public UserEntity getUserByEmail(String email) {
