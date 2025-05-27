@@ -15,7 +15,7 @@ import org.springframework.stereotype.Service;
 public class JobService {
 
     private final JobRepository jobRepository;
-//
+
     public Page<JobEntity> getCandidatesFiltered(Specification<JobEntity> specification, Pageable pageable) {
         return jobRepository.findAll(specification, pageable);
     }
