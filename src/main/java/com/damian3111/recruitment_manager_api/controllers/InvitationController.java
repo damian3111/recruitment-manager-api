@@ -29,12 +29,12 @@ public class InvitationController implements InvitationsApi {
 
     @Override
     public ResponseEntity<List<InvitationDto>> getAllInvitations() {
-        return InvitationsApi.super.getAllInvitations();
+        return ResponseEntity.ok(invitationService.getAllInvitations().stream().map(i -> modelMapper.map(i, InvitationDto.class)).collect(Collectors.toList()));
     }
 
     @Override
-    public ResponseEntity<List<InvitationDto>> getInvitationsByCandidateId(Long candidateId) {
-        return InvitationsApi.super.getInvitationsByCandidateId(candidateId);
+    public ResponseEntity<List<InvitationDto>> getUserRelatedInvitations(Long userId, String email) {
+        return ResponseEntity.ok(invitationService.getUserRelatedInvitations(userId, email).stream().map(i -> modelMapper.map(i, InvitationDto.class)).collect(Collectors.toList()));
     }
 
     @Override
@@ -60,7 +60,9 @@ public class InvitationController implements InvitationsApi {
 
     @Override
     public ResponseEntity<InvitationDto> updateInvitationStatus(Long id, UpdateInvitationStatusRequest updateInvitationStatusRequest) {
-        return InvitationsApi.super.updateInvitationStatus(id, updateInvitationStatusRequest);
+        InvitationEntity invitationEntity = invitationService.updateInvitationStatusById(id, updateInvitationStatusRequest);
+        InvitationDto invitationDto = modelMapper.map(invitationEntity, InvitationDto.class);
+        return ResponseEntity.ok(invitationDto);
     }
 
     @Override
@@ -70,8 +72,22 @@ public class InvitationController implements InvitationsApi {
     }
 
     @Override
-    public ResponseEntity<List<InvitationDto>> getInvitationsByJobUserId(Long userId) {
-        List<InvitationEntity> invitationEntities = invitationService.getInvitationsReceivedByRecruiter(userId).orElseThrow();
+    public ResponseEntity<List<InvitationDto>> getInvitationsByJobUserId(Long userId, String email) {
+        List<InvitationEntity> invitationEntities = invitationService.getAcceptedInvitations(userId, email).orElseThrow();
+
+        return ResponseEntity.ok(invitationEntities.stream().map(i -> modelMapper.map(i, InvitationDto.class)).collect(Collectors.toList()));
+    }
+
+//    @Override
+//    public ResponseEntity<List<InvitationDto>> getInvitationsByEmail(Long userId, String email) {
+//        List<InvitationEntity> invitationEntities = invitationService.getInvitationsReceivedByRecruited(userId, email).orElseThrow();
+//
+//        return ResponseEntity.ok(invitationEntities.stream().map(i -> modelMapper.map(i, InvitationDto.class)).collect(Collectors.toList()));
+//    }
+
+    @Override
+    public ResponseEntity<List<InvitationDto>> getInvitationsByEmail(Long userId, String email) {
+        List<InvitationEntity> invitationEntities = invitationService.getInvitationsReceivedByRecruited2(userId, email).orElseThrow();
 
         return ResponseEntity.ok(invitationEntities.stream().map(i -> modelMapper.map(i, InvitationDto.class)).collect(Collectors.toList()));
     }
