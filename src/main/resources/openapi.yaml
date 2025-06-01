@@ -136,20 +136,26 @@ paths:
                     example: Invitation has been deleted
         '404':
           description: Invitation not found
-  /invitations/candidate/{candidateId}:
+  /invitations/user-related:
     get:
-      summary: Get invitations by candidate ID
-      operationId: getInvitationsByCandidateId
+      summary: Get invitations related with the used
+      operationId: getUserRelatedInvitations
       tags:
         - invitations
       parameters:
-        - name: candidateId
-          in: path
+        - name: userId
+          in: query
           required: true
-          description: ID of the candidate
+          description: ID of the user who owns the job
           schema:
             type: integer
             format: int64
+        - name: email
+          in: query
+          required: true
+          description: email of the user who owns the job
+          schema:
+            type: string
       responses:
         '200':
           description: List of invitations for candidate
@@ -260,6 +266,43 @@ paths:
           schema:
             type: integer
             format: int64
+        - name: email
+          in: query
+          required: true
+          description: email of the user who owns the job
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of matching invitations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/InvitationDto'
+        '404':
+          description: No invitations found
+  /invitations/received-by-recruited:
+    get:
+      summary: Get invitations where job's user ID matches a given value
+      operationId: getInvitationsByEmail
+      tags:
+        - invitations
+      parameters:
+        - name: userId
+          in: query
+          required: true
+          description: ID of the user who owns the job
+          schema:
+            type: integer
+            format: int64
+        - name: email
+          in: query
+          required: true
+          description: email of the user who owns the job
+          schema:
+            type: string
       responses:
         '200':
           description: List of matching invitations
@@ -425,12 +468,6 @@ paths:
       operationId: getAllCandidates
       tags:
         - candidates
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CandidateFilter'
       responses:
         '200':
           description: List of candidates
@@ -561,6 +598,41 @@ paths:
           description: Invalid input
         '404':
           description: Candidate not found
+  /email/confirm-email:
+    get:
+      summary: Confirm user's email using token
+      operationId: confirmEmail
+      tags:
+        - auth
+      parameters:
+        - name: token
+          in: query
+          required: true
+          description: Email confirmation token
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Email confirmed successfully
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: Email confirmed
+        '400':
+          description: Invalid or expired token
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: Token expired
+        '404':
+          description: Token not found
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: Invalid token
 components:
   securitySchemes:
     bearerAuth:
@@ -586,6 +658,8 @@ components:
           type: string
         password:
           type: string
+        is_email_confirmed:
+          type: boolean
         username:
           type: string
         userRole:
@@ -691,6 +765,16 @@ components:
         user_id:
           type: integer
           format: int64
+        skills:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              proficiency_level:
+                type: string
+                enum: [ Beginner, Familiar, Good, Expert ]
     CandidateDto:
       type: object
       properties:
@@ -738,7 +822,15 @@ components:
         location:
           type: string
         skills:
-          type: string
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              proficiency_level:
+                type: string
+                enum: [ Beginner, Familiar, Good, Expert ]
     CandidatesPage:
       type: object
       properties:
@@ -788,8 +880,10 @@ components:
           type: string
         projects:
           type: string
-        salary_expectation:
-          type: string
+        salary_min:
+          type: integer
+        salary_max:
+          type: integer
         work_style:
           type: string
           enum:
@@ -805,7 +899,15 @@ components:
         location:
           type: string
         skills:
-          type: string
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              proficiency_level:
+                type: string
+                enum: [ Beginner, Familiar, Good, Expert ]
       required: [ ]
     JobFilter:
       type: object
@@ -840,6 +942,16 @@ components:
         application_deadline:
           type: string
           format: date
+        skills:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              proficiency_level:
+                type: string
+                enum: [ Beginner, Familiar, Good, Expert ]
       required: [ ]
     Pageable:
       description: minimal Pageable query parameters
