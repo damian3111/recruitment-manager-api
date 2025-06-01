@@ -2,6 +2,7 @@ package com.damian3111.recruitment_manager_api.controllers;
 
 import com.damian3111.recruitment_manager_api.persistence.entities.UserEntity;
 import com.damian3111.recruitment_manager_api.persistence.entities.UserRole;
+import com.damian3111.recruitment_manager_api.services.CustomEmailService;
 import com.damian3111.recruitment_manager_api.services.UserService;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
@@ -21,6 +22,7 @@ public class UserController implements UsersApi {
 
     private final UserService userService;
     private final ModelMapper modelMapper;
+    private final CustomEmailService customEmailService;
 
     @Override
     public ResponseEntity<User> addUser(@RequestBody User user) {
@@ -33,6 +35,7 @@ public class UserController implements UsersApi {
                 .build();
 
         UserEntity userEntity = userService.addUser(build);
+        customEmailService.sendConfirmationEmail(userEntity);
 
         return ResponseEntity.ok(modelMapper.map(userEntity, User.class));
     }
@@ -40,7 +43,6 @@ public class UserController implements UsersApi {
     @Override
     public ResponseEntity<User> getUserByEmail(String email) {
         UserEntity user = userService.getUserByEmail(email);
-
 
         return null;
     }
