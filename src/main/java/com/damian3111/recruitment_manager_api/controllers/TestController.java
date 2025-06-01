@@ -4,6 +4,7 @@ import com.damian3111.recruitment_manager_api.persistence.entities.UserEntity;
 import com.damian3111.recruitment_manager_api.services.JWTService;
 import com.damian3111.recruitment_manager_api.services.UserService;
 import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.openapitools.model.LoginUserDto;
@@ -22,7 +23,7 @@ public class TestController {
 
     private final JWTService jwtService;
     private final UserService userService;
-    
+
     @GetMapping("/test")
     public String helloWorld(){
         return "hello world!";
@@ -41,19 +42,20 @@ public class TestController {
     @PostMapping("/login")
     public ResponseEntity<String> helloWorld22(@RequestBody LoginUserDto loginUserDto, HttpServletResponse response){
         UserEntity userEntity = userService.authenticate(loginUserDto);
-        HashMap<String, Object> claims = new HashMap<>();
-        claims.put("role", userEntity.getRole());
-        String jwtToken = jwtService.generateToken(claims, userEntity);
-
-
-        Cookie cookie = new Cookie("authToken", jwtToken);
-        cookie.setHttpOnly(true);
-//        cookie.setSecure(true);
-        cookie.setPath("/");
-        cookie.setMaxAge(60 * 60 * 24);
-
-        response.addCookie(cookie);
+        String jwtToken = jwtService.handleLogin(userEntity, response);
 
         return ResponseEntity.ok(jwtToken);
+    }
+
+    @PostMapping("/logout2")
+    public ResponseEntity<String> logout(HttpServletRequest request, HttpServletResponse response) {
+        Cookie jwtCookie = new Cookie("authToken", null);
+        jwtCookie.setHttpOnly(true);
+        jwtCookie.setSecure(true);
+        jwtCookie.setPath("/");
+        jwtCookie.setMaxAge(0);
+        response.addCookie(jwtCookie);
+
+        return ResponseEntity.ok("Logged out successfully");
     }
 }
