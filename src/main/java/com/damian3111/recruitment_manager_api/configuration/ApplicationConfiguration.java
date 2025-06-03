@@ -52,7 +52,6 @@ public class ApplicationConfiguration {
     public ModelMapper modelMapper() {
         ModelMapper modelMapper = new ModelMapper();
 
-        // Converter for employmentType (String to EmploymentTypeEnum)
         Converter<String, JobDto.EmploymentTypeEnum> employmentTypeConverter = new Converter<>() {
             @Override
             public JobDto.EmploymentTypeEnum convert(MappingContext<String, JobDto.EmploymentTypeEnum> context) {
@@ -63,7 +62,7 @@ public class ApplicationConfiguration {
                 try {
                     return JobDto.EmploymentTypeEnum.fromValue(source);
                 } catch (IllegalArgumentException e) {
-                    return null; // Or a default, e.g., EmploymentTypeEnum.FULL_TIME
+                    return null;
                 }
             }
         };
@@ -79,12 +78,11 @@ public class ApplicationConfiguration {
                 try {
                     return JobDto.ExperienceLevelEnum.fromValue(source);
                 } catch (IllegalArgumentException e) {
-                    return null; // Or a default, e.g., ExperienceLevelEnum.JUNIOR
+                    return null;
                 }
             }
         };
 
-        // Converter for employmentMode (String to EmploymentModeEnum)
         Converter<String, JobDto.EmploymentModeEnum> employmentModeConverter = new Converter<>() {
             @Override
             public JobDto.EmploymentModeEnum convert(MappingContext<String, JobDto.EmploymentModeEnum> context) {
@@ -95,12 +93,11 @@ public class ApplicationConfiguration {
                 try {
                     return JobDto.EmploymentModeEnum.fromValue(source);
                 } catch (IllegalArgumentException e) {
-                    return null; // Or a default, e.g., EmploymentModeEnum.REMOTE
+                    return null;
                 }
             }
         };
 
-        // Converter for remote (derive from employmentMode)
         Converter<String, Boolean> remoteConverter = new Converter<>() {
             @Override
             public Boolean convert(MappingContext<String, Boolean> context) {
@@ -109,7 +106,6 @@ public class ApplicationConfiguration {
             }
         };
 
-        // Converter for BigDecimal to Double (salaryMin/salaryMax)
         Converter<BigDecimal, Double> bigDecimalToDoubleConverter = new Converter<>() {
             @Override
             public Double convert(MappingContext<BigDecimal, Double> context) {
@@ -118,7 +114,6 @@ public class ApplicationConfiguration {
             }
         };
 
-        // PropertyMap for JobEntity to JobDto
         PropertyMap<JobEntity, JobDto> jobMap = new PropertyMap<>() {
             @Override
             protected void configure() {
@@ -131,20 +126,7 @@ public class ApplicationConfiguration {
                 using(bigDecimalToDoubleConverter).map(source.getSalaryMax()).setSalaryMax(null);
             }
         };
-
-        // PropertyMap for Page<JobEntity> to JobsPage
-//        PropertyMap<Page<JobEntity>, org.openapitools.model.JobsPage> pageMap = new PropertyMap<>() {
-//            @Override
-//            protected void configure() {
-//                map().setContent(source.getContent());
-//                map().setTotalPages((long) source.getTotalPages());
-//                map().setTotalElements(source.getTotalElements());
-//            }
-//        };
-
         modelMapper.addMappings(jobMap);
-//        modelMapper.addMappings(pageMap);
-
         return modelMapper;
     }
 }
