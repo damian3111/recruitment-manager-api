@@ -1,6 +1,5 @@
 package com.damian3111.recruitment_manager_api.persistence.specification;
 
-import com.damian3111.recruitment_manager_api.persistence.entities.CandidateEntity;
 import com.damian3111.recruitment_manager_api.persistence.entities.CandidateSkill;
 import com.damian3111.recruitment_manager_api.persistence.entities.SkillEntity;
 import jakarta.persistence.criteria.*;
@@ -8,7 +7,6 @@ import org.openapitools.model.JobDtoSkillsInner;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
