@@ -1,12 +1,10 @@
 package com.damian3111.recruitment_manager_api.persistence.repositories;
 
 import com.damian3111.recruitment_manager_api.persistence.entities.CandidateEntity;
-import com.damian3111.recruitment_manager_api.persistence.entities.CandidateSkill;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
 import java.util.Optional;
 
 @Repository

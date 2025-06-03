@@ -1,7 +1,6 @@
 package com.damian3111.recruitment_manager_api.persistence.repositories;
 
 import com.damian3111.recruitment_manager_api.persistence.entities.InvitationEntity;
-import com.damian3111.recruitment_manager_api.persistence.entities.JobEntity;
 import jakarta.transaction.Transactional;
 import org.openapitools.model.InvitationStatus;
 import org.springframework.data.jpa.repository.JpaRepository;

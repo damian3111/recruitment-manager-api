@@ -1,6 +1,5 @@
 package com.damian3111.recruitment_manager_api.persistence.repositories;
 
-import com.damian3111.recruitment_manager_api.persistence.entities.CandidateEntity;
 import com.damian3111.recruitment_manager_api.persistence.entities.EmailConfirmationToken;
 import org.springframework.data.jpa.repository.JpaRepository;
 
