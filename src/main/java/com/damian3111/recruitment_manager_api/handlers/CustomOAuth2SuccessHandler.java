@@ -30,10 +30,8 @@ public class CustomOAuth2SuccessHandler implements AuthenticationSuccessHandler 
                                         Authentication authentication) throws IOException {
 
         OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
-
         String email = oAuth2User.getAttribute("email");
         UserEntity userEntity = userService.loadOrCreateUserFromOAuth(email);
-
         String jwtToken = jwtService.handleLogin(userEntity, response);
 
         response.sendRedirect("http://localhost:3000/dashboard");
