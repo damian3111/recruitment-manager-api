@@ -39,9 +39,8 @@ public class InvitationController implements InvitationsApi {
 
     @Override
     public ResponseEntity<List<InvitationDto>> getInvitationsByCandidateAndRecruiter(Long candidateId, Long recruiterId) {
-        ResponseEntity<List<InvitationDto>> ok = ResponseEntity.ok(invitationService.getInvitationsByCandidateAndRecruiter(candidateId, recruiterId).orElseThrow()
+        return ResponseEntity.ok(invitationService.getInvitationsByCandidateAndRecruiter(candidateId, recruiterId).orElseThrow()
                         .stream().map(i -> modelMapper.map(i, InvitationDto.class)).collect(Collectors.toList()));
-        return ok;
     }
 
     @Override
@@ -78,13 +77,6 @@ public class InvitationController implements InvitationsApi {
         return ResponseEntity.ok(invitationEntities.stream().map(i -> modelMapper.map(i, InvitationDto.class)).collect(Collectors.toList()));
     }
 
-//    @Override
-//    public ResponseEntity<List<InvitationDto>> getInvitationsByEmail(Long userId, String email) {
-//        List<InvitationEntity> invitationEntities = invitationService.getInvitationsReceivedByRecruited(userId, email).orElseThrow();
-//
-//        return ResponseEntity.ok(invitationEntities.stream().map(i -> modelMapper.map(i, InvitationDto.class)).collect(Collectors.toList()));
-//    }
-
     @Override
     public ResponseEntity<List<InvitationDto>> getInvitationsByEmail(Long userId, String email) {
         List<InvitationEntity> invitationEntities = invitationService.getInvitationsReceivedByRecruited2(userId, email).orElseThrow();
@@ -92,10 +84,4 @@ public class InvitationController implements InvitationsApi {
         return ResponseEntity.ok(invitationEntities.stream().map(i -> modelMapper.map(i, InvitationDto.class)).collect(Collectors.toList()));
     }
 
-    //    @Override
-//    public ResponseEntity<Void> deleteInvitation(Long id) {
-//        Map<String, String> response = new HashMap<>();
-//        response.put("message", "Invitation has been deleted");
-//        return ResponseEntity.ok(response);
-//    }
 }

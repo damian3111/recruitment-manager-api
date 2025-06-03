@@ -9,7 +9,9 @@ import com.damian3111.recruitment_manager_api.persistence.specification.Candidat
 import com.damian3111.recruitment_manager_api.services.CandidateService;
 import com.damian3111.recruitment_manager_api.services.SkillService;
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
 import org.modelmapper.ModelMapper;
 import org.openapitools.api.CandidatesApi;
@@ -28,6 +30,7 @@ import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
+@Slf4j
 @RequiredArgsConstructor
 @RestController
 public class CandidateController implements CandidatesApi {
@@ -36,7 +39,6 @@ public class CandidateController implements CandidatesApi {
     private final ModelMapper modelMapper;
     private final CandidatesSpecification candidatesSpecification;
     private final SkillService skillService;
-    private final CandidateRepository candidateRepository;
     private final CandidateSkillRepository candidateSkillRepository;
     @Override
     public ResponseEntity<CandidateDto> addCandidate(CandidateDto candidateDto) {
@@ -45,64 +47,29 @@ public class CandidateController implements CandidatesApi {
         CandidateDto savedDto = modelMapper.map(savedEntity, CandidateDto.class);
         return ResponseEntity.status(201).body(savedDto);
     }
-//
+
     @Override
     public ResponseEntity<List<CandidateDto>> getAllCandidates() {
-//    public ResponseEntity<List<CandidateDto>> getAllCandidates(CandidateFilter candidateFilter, Pageable pageable) {
         List<CandidateEntity> entities = candidateService.getAllCandidates();
         List<CandidateDto> dtos = entities.stream()
                 .map(entity -> modelMapper.map(entity, CandidateDto.class))
                 .collect(Collectors.toList());
         return ResponseEntity.ok(dtos);
-
-
-
-//        Page<CandidateEntity> entityPage = this.candidateService.getAllCandidates(
-//                this.getSpecification(candidateFilter),
-//                pageable
-//        );
-//        affiliationService.setAffiliationPositions(entityPage.getContent());
-//        return ResponseEntity.ok(this.modelMapper.map(entityPage, CandidatesPage.class));
     }
 
     @Override
-    public ResponseEntity<CandidatesPage> filterCandidates(CandidateFilter candidateFilter, Pageable pageable) {
-//        List<CandidateEntity> entities = candidateService.getAllCandidates();
-//        List<CandidateDto> dtos = entities.stream()
-//                .map(entity -> modelMapper.map(entity, CandidateDto.class))
-//                .collect(Collectors.toList());
-//        return ResponseEntity.ok(dtos);
-
-        Page<CandidateEntity> entityPage = candidateService.getCandidatesFiltered(
-                this.getSpecification(candidateFilter),
-                pageable
-        );
-//        affiliationService.setAffiliationPositions(entityPage.getContent());
-        return ResponseEntity.ok(this.modelMapper.map(entityPage, CandidatesPage.class));
+    public ResponseEntity<CandidatesPage> filterCandidates(CandidateFilter filter, Pageable pageable) {
+        Page<CandidateEntity> entityPage = candidateService.getCandidatesFiltered(getSpecification(filter), pageable);
+        return ResponseEntity.ok(modelMapper.map(entityPage, CandidatesPage.class));
     }
-
-
-//    @Override
-//    public ResponseEntity<CandidateDto> getCandidateById(Long id) {
-//            return candidateService.getCandidateById(id)
-//            .map(entity -> modelMapper.map(entity, CandidateDto.class))
-//            .map(ResponseEntity::ok)
-//                .orElse(ResponseEntity.notFound().build());
-//}
 
     @Override
     public ResponseEntity<CandidateDto> getCandidateById(Long id) {
-        CandidateEntity candidateEntity = candidateService.getCandidateById(id).orElseThrow();
-        CandidateDto candidateDto = modelMapper.map(candidateEntity, CandidateDto.class);
-        candidateDto.setSkills(candidateEntity.getSkills().stream().map(s -> {
-            JobDtoSkillsInner jobDtoSkillsInner = new JobDtoSkillsInner();
-            jobDtoSkillsInner.setName(s.getSkill().getName());
-            jobDtoSkillsInner.setProficiencyLevel(JobDtoSkillsInner.ProficiencyLevelEnum.fromValue(s.getProficiencyLevel()));
-            return jobDtoSkillsInner;
-        }).collect(Collectors.toList()));
-
-        return ResponseEntity.ok(candidateDto);
-}
+        log.info("Fetching candidate with ID: {}", id);
+        CandidateEntity candidateEntity = candidateService.getCandidateById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Candidate not found with ID: " + id));
+        return ResponseEntity.ok(mapToCandidateDto(candidateEntity));
+    }
 
     @Override
     public ResponseEntity<CandidateDto> getCandidateByEmail(String email) {
@@ -121,7 +88,6 @@ public class CandidateController implements CandidatesApi {
     @Override
     public ResponseEntity<CandidateDto> updateCandidate(Long id, CandidateDto candidateDto) {
         CandidateEntity candidateEntity = candidateService.getCandidateByEmail(candidateDto.getEmail()).orElseThrow();
-        HashMap<Object, Object> objectObjectHashMap = new HashMap<>();
         ArrayList<ArrayList> skillEntities = new ArrayList<>();
 
         candidateDto.getSkills().forEach(s -> {
@@ -151,8 +117,6 @@ public class CandidateController implements CandidatesApi {
             candidateSkills.add(candidateSkill);
         });
 
-//        CandidateSkill candidateSkill = candidateSkillRepository.save(new CandidateSkill(candidateEntity, java, "Good"));
-
         List<CandidateSkill> skills = candidateEntity.getSkills();
         skills.clear();
         skills.addAll(candidateSkills);
@@ -160,70 +124,11 @@ public class CandidateController implements CandidatesApi {
         return ResponseEntity.ok(modelMapper.map(candidateService.updateCandidate(candidateEntity.getId(), candidateEntity, candidateDto), CandidateDto.class));
     }
 
-    private List<CandidateSkill> mapSkills(List<JobDtoSkillsInner> skillDtos, CandidateEntity candidate) {
-        List<CandidateSkill> candidateSkills = new ArrayList<>();
-        if (skillDtos == null) {
-            return candidateSkills;
-        }
-
-        for (JobDtoSkillsInner skillDto : skillDtos) {
-            if (skillDto.getName() == null) {
-                continue; // Skip invalid skills
-            }
-
-            // Find or create SkillEntity
-            SkillEntity skillEntity = skillService.findOrCreateSkill(skillDto.getName());
-
-            // Get proficiency level
-            String proficiencyLevel = skillDto.getProficiencyLevel() != null
-                    ? skillDto.getProficiencyLevel().getValue()
-                    : "Beginner"; // Default if null
-
-            // Validate proficiency level
-            if (!List.of("Beginner", "Familiar", "Good", "Expert").contains(proficiencyLevel)) {
-                throw new IllegalArgumentException("Invalid proficiency level: " + proficiencyLevel);
-            }
-
-            // Create CandidateSkill
-            CandidateSkill candidateSkill = CandidateSkill.builder()
-                    .candidate(candidate)
-                    .skill(skillEntity)
-                    .proficiencyLevel(proficiencyLevel)
-                    .build();
-
-            candidateSkills.add(candidateSkill);
-        }
-        return candidateSkills;
-    }
-
     private Specification<CandidateEntity> getSpecification(CandidateFilter filter) {
         CandidatesSpecification factory = this.candidatesSpecification;
-//        CompanyEntity company = userEntityService.findByUsername(SecurityContextHolder.getContext().getAuthentication().getName()).getCompany();
-        Specification<CandidateEntity> candidateSpec = null;
-//        if (company != null) {
-//            companySpec = (root, cq, cb) -> {
-//                cq.multiselect(root);
-//                cq.orderBy(
-//                        cb.desc(
-//                                cb.selectCase()
-//                                        .when(cb.equal(root.get("company").get("id"), company.getId()), 1)
-//                                        .otherwise(0)
-//                        ),
-//                        cb.desc(root.get("id"))
-//                );
-//                return null;
-//            };
-//        }
-//        if(company != null) {
-//            List<CompanyEntity> companies = new ArrayList<>();
-//            companies.add(company);
-//            companies.addAll(company.getContractors());
-//            companySpec = factory.propertyIn("company", companies);
-//        }
-
-        return  Optional.ofNullable(filter.getFirstName())
-                                .map(v -> factory.propertyLikeIgnoreCase("firstName", v))
-                                .orElse(factory.empty())
+        return Specification.where(Optional.ofNullable(filter.getFirstName())
+                        .map(v -> factory.propertyLikeIgnoreCase("firstName", v))
+                        .orElse(factory.empty()))
                 .and(Optional.ofNullable(filter.getLastName())
                         .map(v -> factory.propertyLikeIgnoreCase("lastName", v))
                         .orElse(factory.empty()))
@@ -270,7 +175,18 @@ public class CandidateController implements CandidatesApi {
                         .map(v -> factory.propertyLikeIgnoreCase("location", v))
                         .orElse(factory.empty()))
                 .and(Optional.ofNullable(filter.getSkills())
-                        .map(v -> factory.propertyInSkills(filter.getSkills())) // Use new skills specification
+                        .map(factory::propertyInSkills)
                         .orElse(factory.empty()));
     }
+    private CandidateDto mapToCandidateDto(CandidateEntity candidateEntity) {
+        CandidateDto candidateDto = modelMapper.map(candidateEntity, CandidateDto.class);
+        List<JobDtoSkillsInner> skills = candidateEntity.getSkills().stream()
+                .map(s -> new JobDtoSkillsInner()
+                        .name(s.getSkill().getName())
+                        .proficiencyLevel(JobDtoSkillsInner.ProficiencyLevelEnum.fromValue(s.getProficiencyLevel())))
+                .collect(Collectors.toList());
+        candidateDto.setSkills(skills);
+        return candidateDto;
+    }
+
 }

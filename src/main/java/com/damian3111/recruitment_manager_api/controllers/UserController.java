@@ -42,9 +42,7 @@ public class UserController implements UsersApi {
 
     @Override
     public ResponseEntity<User> getUserByEmail(String email) {
-        UserEntity user = userService.getUserByEmail(email);
-
-        return null;
+        return ResponseEntity.ok(modelMapper.map(userService.getUserByEmail(email), User.class));
     }
 
     @Override

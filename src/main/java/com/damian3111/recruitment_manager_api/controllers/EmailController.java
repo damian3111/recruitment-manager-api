@@ -30,7 +30,6 @@ public class EmailController implements EmailApi {
         UserEntity user = confirmationToken.getUser();
         user.setEmailConfirmed(true);
         userRepository.save(user);
-
         emailConfirmationTokenRepository.delete(confirmationToken);
 
         return ResponseEntity.ok("Email confirmed");    }

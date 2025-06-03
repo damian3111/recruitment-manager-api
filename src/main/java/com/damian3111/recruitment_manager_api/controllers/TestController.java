@@ -43,6 +43,8 @@ public class TestController {
     public ResponseEntity<String> helloWorld22(@RequestBody LoginUserDto loginUserDto, HttpServletResponse response){
         UserEntity userEntity = userService.authenticate(loginUserDto);
         String jwtToken = jwtService.handleLogin(userEntity, response);
+        response.setHeader("Set-Cookie", "authToken=" + jwtToken + "; Path=/; Max-Age=86400; HttpOnly; Secure; SameSite=None");
+        System.out.println("Set-Cookie header value: " + response.getHeader("Set-Cookie"));
 
         return ResponseEntity.ok(jwtToken);
     }

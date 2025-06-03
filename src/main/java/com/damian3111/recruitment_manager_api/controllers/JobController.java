@@ -8,7 +8,10 @@ import com.damian3111.recruitment_manager_api.persistence.specification.JobSpeci
 import com.damian3111.recruitment_manager_api.services.JobService;
 import com.damian3111.recruitment_manager_api.services.SkillService;
 import com.damian3111.recruitment_manager_api.services.UserService;
+import jakarta.persistence.EntityNotFoundException;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.openapitools.api.JobsApi;
 import org.openapitools.model.*;
@@ -26,6 +29,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+@Slf4j
 @RequiredArgsConstructor
 @RestController
 public class JobController implements JobsApi {
@@ -38,36 +42,38 @@ public class JobController implements JobsApi {
     private final SkillService skillService;
     private final UserService userService;
 
+    private static final List<String> VALID_PROFICIENCY_LEVELS = List.of("Beginner", "Familiar", "Good", "Expert");
 
     @Override
     public ResponseEntity<List<JobDto>> getAllJobs() {
-
-        List<JobEntity> all = jobRepository.findAll();
-        List<JobDto> collect = all.stream().map(j -> modelMapper.map(j, JobDto.class)).toList();
-        return ResponseEntity.ok(collect);
+        List<JobEntity> jobEntities = jobRepository.findAll();
+        List<JobDto> jobDtos = jobEntities.stream()
+                .map(this::mapToJobDto)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(jobDtos);
     }
 
     @Override
-    public ResponseEntity<JobsPage> filterJobs(JobFilter jobFilter, Pageable pageable) {
-        Page<JobEntity> entityPage = jobService.getCandidatesFiltered(
-                this.getSpecification(jobFilter),
-                pageable
-        );
-        JobsPage map = this.modelMapper.map(entityPage, JobsPage.class);
-//        affiliationService.setAffiliationPositions(entityPage.getContent());
-        return ResponseEntity.ok(map);    }
+    public ResponseEntity<JobsPage> filterJobs(JobFilter filter, Pageable pageable) {
+        Page<JobEntity> entityPage = jobService.getCandidatesFiltered(getSpecification(filter), pageable);
+        JobsPage jobsPage = modelMapper.map(entityPage, JobsPage.class);
+        return ResponseEntity.ok(jobsPage);
+    }
 
     @Override
     public ResponseEntity<List<JobDto>> getJobsByUserId(Long userId) {
-        List<JobEntity> jobEntities = jobRepository.findByUserId(userId).orElseThrow();
-        List<JobDto> parsedJobEntities = jobEntities.stream()
-                .map(jobEntity -> modelMapper.map(jobEntity, JobDto.class)).collect(Collectors.toList());
-        return ResponseEntity.ok(parsedJobEntities);
+        log.info("Fetching jobs for user ID: {}", userId);
+        List<JobEntity> jobEntities = jobRepository.findByUserId(userId)
+                .orElseThrow(() -> new EntityNotFoundException("No jobs found for user ID: " + userId));
+        List<JobDto> jobDtos = jobEntities.stream()
+                .map(this::mapToJobDto)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(jobDtos);
     }
 
     @Override
     public ResponseEntity<JobDto> createJob(JobDto jobDto) {
-
+        //TEMPORARY CONFIG
         JobEntity map = modelMapper.map(jobDto, JobEntity.class);
         map.setCompanyName("sdds");
         map.setPostedDate(LocalDate.now());
@@ -76,7 +82,6 @@ public class JobController implements JobsApi {
         String name = SecurityContextHolder.getContext().getAuthentication().getName();
         UserEntity userEntity = userService.getUserByEmail(name);
 
-        HashMap<Object, Object> objectObjectHashMap = new HashMap<>();
         ArrayList<ArrayList> skillEntities = new ArrayList<>();
         map.setUser(userEntity);
         map.setSkills(new ArrayList<>());
@@ -94,18 +99,12 @@ public class JobController implements JobsApi {
         skillEntities.forEach(s -> {
             SkillEntity skill = (SkillEntity) s.get(0);
             String proficiencyLevel = (String) s.get(1);
-//            Optional<CandidateSkill> byCandidateIdAndSkillId = jobSkillRepository.findByJobIdAndSkillId(job.getId(), skill.getId());
-//            if (byCandidateIdAndSkillId.isPresent()){
-//                candidateSkillRepository.updateProficiencyLevel(candidateEntity.getId(), skill.getId(), proficiencyLevel);
-//            }else {
-                JobSkill newSkill = JobSkill.builder()
-                        .skill(skill)
-                        .job(jobEntity)
-                        .proficiencyLevel(proficiencyLevel)
-                        .build();
-                jobSkillRepository.save(newSkill);
-//            }
-//            JobSkill jobSkill = jobSkillRepository.findByCandidateIdAndSkillId(candidateEntity.getId(), skill.getId()).orElseThrow();
+            JobSkill newSkill = JobSkill.builder()
+                    .skill(skill)
+                    .job(jobEntity)
+                    .proficiencyLevel(proficiencyLevel)
+                    .build();
+            jobSkillRepository.save(newSkill);
             jobSkills.add(newSkill);
         });
 
@@ -115,71 +114,85 @@ public class JobController implements JobsApi {
 
         return ResponseEntity.ok(null);
     }
-//
-//    @Override
-//    public ResponseEntity<JobDto> createJob(JobDto jobDto) {
-//        JobEntity map = modelMapper.map(jobDto, JobEntity.class);
-//        map.setCompanyName("sdds");
-//        map.setPostedDate(LocalDate.now());
-//        map.setApplicationDeadline(LocalDate.now());
-//        JobEntity save = jobRepository.save(map);
-//
-//        return ResponseEntity.ok(jobDto);
-//    }
 
     @Override
     public ResponseEntity<Void> deleteJob(Long id) {
-        return JobsApi.super.deleteJob(id);
+        log.info("Deleting job with ID: {}", id);
+        if (!jobRepository.existsById(id)) {
+            throw new EntityNotFoundException("Job not found with ID: " + id);
+        }
+        jobRepository.deleteById(id);
+        return ResponseEntity.noContent().build();
     }
-
     @Override
     public ResponseEntity<JobDto> getJobById(Long id) {
-        JobEntity jobEntity = jobRepository.findById(id).orElseThrow();
-        JobDto jobDto = modelMapper.map(jobEntity, JobDto.class);
-        jobDto.setSkills(jobEntity.getSkills().stream().map(s -> {
-            JobDtoSkillsInner jobDtoSkillsInner = new JobDtoSkillsInner();
-            jobDtoSkillsInner.setName(s.getSkill().getName());
-            jobDtoSkillsInner.setProficiencyLevel(JobDtoSkillsInner.ProficiencyLevelEnum.fromValue(s.getProficiencyLevel()));
-            return jobDtoSkillsInner;
-        }).collect(Collectors.toList()));
-
+        log.info("Fetching job with ID: {}", id);
+        JobEntity jobEntity = jobRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Job not found with ID: " + id));
+        JobDto jobDto = mapToJobDto(jobEntity);
         return ResponseEntity.ok(jobDto);
     }
 
     @Override
-    public ResponseEntity<JobDto> updateJob(Long id, JobDto jobDto) {
-        return JobsApi.super.updateJob(id, jobDto);
+    public ResponseEntity<JobDto> updateJob(Long id, @Valid JobDto jobDto) {
+        log.info("Updating job with ID: {}", id);
+        JobEntity jobEntity = jobRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Job not found with ID: " + id));
+
+        modelMapper.map(jobDto, jobEntity);
+        List<JobSkill> newSkills = mapSkills(jobDto.getSkills(), jobEntity);
+        updateJobSkills(jobEntity, newSkills);
+
+        JobEntity updatedEntity = jobRepository.save(jobEntity);
+        JobDto updatedDto = mapToJobDto(updatedEntity);
+        return ResponseEntity.ok(updatedDto);
     }
 
+    private JobDto mapToJobDto(JobEntity jobEntity) {
+        JobDto jobDto = modelMapper.map(jobEntity, JobDto.class);
+        List<JobDtoSkillsInner> skills = jobEntity.getSkills().stream()
+                .map(s -> new JobDtoSkillsInner()
+                        .name(s.getSkill().getName())
+                        .proficiencyLevel(JobDtoSkillsInner.ProficiencyLevelEnum.fromValue(s.getProficiencyLevel())))
+                .collect(Collectors.toList());
+        jobDto.setSkills(skills);
+        return jobDto;
+    }
+
+    private List<JobSkill> mapSkills(List<JobDtoSkillsInner> skillDtos, JobEntity job) {
+        if (skillDtos == null || skillDtos.isEmpty()) {
+            return List.of();
+        }
+
+        return skillDtos.stream()
+                .filter(skillDto -> skillDto.getName() != null)
+                .map(skillDto -> {
+                    SkillEntity skillEntity = skillService.findOrCreateSkill(skillDto.getName());
+                    String proficiencyLevel = Optional.ofNullable(skillDto.getProficiencyLevel())
+                            .map(JobDtoSkillsInner.ProficiencyLevelEnum::getValue)
+                            .orElse("Beginner");
+
+                    if (!VALID_PROFICIENCY_LEVELS.contains(proficiencyLevel)) {
+                        throw new IllegalArgumentException("Invalid proficiency level: " + proficiencyLevel);
+                    }
+
+                    return JobSkill.builder()
+                            .job(job)
+                            .skill(skillEntity)
+                            .proficiencyLevel(proficiencyLevel)
+                            .build();
+                })
+                .collect(Collectors.toList());
+    }
+
+    private void updateJobSkills(JobEntity job, List<JobSkill> newSkills) {
+    }
 
     private Specification<JobEntity> getSpecification(JobFilter filter) {
         JobSpecification factory = this.jobSpecification;
-//        CompanyEntity company = userEntityService.findByUsername(SecurityContextHolder.getContext().getAuthentication().getName()).getCompany();
-        Specification<JobEntity> jobSpec = null;
-//        if (company != null) {
-//            companySpec = (root, cq, cb) -> {
-//                cq.multiselect(root);
-//                cq.orderBy(
-//                        cb.desc(
-//                                cb.selectCase()
-//                                        .when(cb.equal(root.get("company").get("id"), company.getId()), 1)
-//                                        .otherwise(0)
-//                        ),
-//                        cb.desc(root.get("id"))
-//                );
-//                return null;
-//            };
-//        }
-//        if(company != null) {
-//            List<CompanyEntity> companies = new ArrayList<>();
-//            companies.add(company);
-//            companies.addAll(company.getContractors());
-//            companySpec = factory.propertyIn("company", companies);
-//        }
-
-        return Optional.ofNullable(filter.getTitle())
-                .map(v -> factory.propertyLikeIgnoreCase("title", v))
-                .orElse(factory.empty())
+        return Specification.where(Optional.ofNullable(filter.getTitle())
+                        .map(v -> factory.propertyLikeIgnoreCase("title", v))
+                        .orElse(factory.empty()))
                 .and(Optional.ofNullable(filter.getEmploymentType())
                         .map(v -> factory.propertyLikeIgnoreCase("employmentType", v))
                         .orElse(factory.empty()))
@@ -214,7 +227,7 @@ public class JobController implements JobsApi {
                         .map(v -> factory.propertyLikeIgnoreCase("applicationDeadline", v.toString()))
                         .orElse(factory.empty()))
                 .and(Optional.ofNullable(filter.getSkills())
-                        .map(v -> factory.propertyInSkills(filter.getSkills())) // Use new skills specification
+                        .map(factory::propertyInSkills)
                         .orElse(factory.empty()));
     }
 }
