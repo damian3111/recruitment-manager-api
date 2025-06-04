@@ -398,7 +398,7 @@ paths:
           description: User not found
   /jobs/{id}:
     get:
-      summary: Get job by ID
+      summary: Get job by ID.
       operationId: getJobById
       tags:
         - jobs
