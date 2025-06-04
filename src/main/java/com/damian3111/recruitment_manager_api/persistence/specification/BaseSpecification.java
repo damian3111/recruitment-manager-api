@@ -72,7 +72,7 @@ public interface BaseSpecification <T, K> {
     default Specification<T> propertyInSkills(List<JobDtoSkillsInner> skills) {
         return (root, cq, cb) -> {
             if (skills == null || skills.isEmpty()) {
-                return cb.conjunction(); // Return true predicate for empty skills
+                return cb.conjunction();
             }
 
             Join<T, CandidateSkill> candidateSkillJoin = root.join("skills");
@@ -86,7 +86,6 @@ public interface BaseSpecification <T, K> {
                                 skill.getName().toLowerCase()
                         );
 
-                        // Add proficiency level filter if provided
                         if (skill.getProficiencyLevel() != null) {
                             return cb.and(
                                     namePredicate,
@@ -100,7 +99,6 @@ public interface BaseSpecification <T, K> {
                     })
                     .collect(Collectors.toList());
 
-            // Combine predicates with OR (match any skill)
             return cb.or(predicates.toArray(new Predicate[0]));
         };
     }
