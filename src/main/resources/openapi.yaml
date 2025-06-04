@@ -477,7 +477,6 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/CandidateDto'
-
     post:
       summary: Add a new candidate
       operationId: addCandidate
