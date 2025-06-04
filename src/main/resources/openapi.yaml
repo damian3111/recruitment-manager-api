@@ -411,7 +411,7 @@ paths:
             format: int64
       responses:
         '200':
-          description: Job details
+          description: Job detailss
           content:
             application/json:
               schema:
