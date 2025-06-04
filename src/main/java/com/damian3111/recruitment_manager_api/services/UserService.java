@@ -5,7 +5,6 @@ import com.damian3111.recruitment_manager_api.persistence.entities.UserRole;
 import com.damian3111.recruitment_manager_api.persistence.repositories.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.openapitools.model.LoginUserDto;
-import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -45,14 +44,12 @@ public class UserService {
         }catch (Exception e){
                 throw new RuntimeException("Wrong credentials");
         }
-
         UserEntity userEntity = userRepository.findUserEntityByEmail(loginUserDto.getEmail())
                 .orElseThrow();
 
         if (!userEntity.isEmailConfirmed()) {
             throw new RuntimeException("Please confirm your email before logging in.");
         }
-
         return userEntity;
     }
 

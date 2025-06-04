@@ -25,21 +25,28 @@ public class JWTService {
     @Value("${security.jwt.expiration-time}")
     private long jwtExpiration;
 
-    public String handleLogin(UserEntity userEntity, HttpServletResponse response){
+    public String handleLogin(UserEntity userEntity, HttpServletResponse response) {
         HashMap<String, Object> claims = new HashMap<>();
         claims.put("role", userEntity.getRole());
         String jwtToken = generateToken(claims, userEntity);
 
-        Cookie cookie = new Cookie("authToken", jwtToken);
-        cookie.setHttpOnly(true);
+        if (jwtToken == null || jwtToken.isEmpty()) {
+            System.err.println("Failed to generate JWT");
+            throw new RuntimeException("Token generation failed");
+        }
+
+//        Cookie cookie = new Cookie("authToken", jwtToken);
+//        cookie.setHttpOnly(true);
 //        cookie.setSecure(true);
-        cookie.setPath("/");
-        cookie.setMaxAge(60 * 60 * 24);
-
-        response.addCookie(cookie);
-
+//        cookie.setPath("/");
+//        cookie.setMaxAge(60 * 60 * 24);
+//        cookie.setAttribute("SameSite", "None");
+//
+//        response.addCookie(cookie);
+        System.out.println("Cookie set: authToken=" + jwtToken);
         return jwtToken;
     }
+
 
     public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
         final Claims claims = extractAllClaims(token);

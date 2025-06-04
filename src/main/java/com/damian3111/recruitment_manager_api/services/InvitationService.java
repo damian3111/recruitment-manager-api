@@ -42,10 +42,7 @@ public class InvitationService {
         JobEntity job = jobRepository.findById(dto.getJobId())
                 .orElseThrow(() -> new RuntimeException("Job not found"));
 
-
-
         Optional<List<InvitationEntity>> byCandidateEmailOrJobUserEmail2 = invitationRepository.findByCandidateEmailOrJobUserEmail2(candidate.getId(), job.getId());
-        //contains empty collection
         if (!byCandidateEmailOrJobUserEmail2.get().isEmpty())
             throw new RuntimeException("Invitation already exissts");
 

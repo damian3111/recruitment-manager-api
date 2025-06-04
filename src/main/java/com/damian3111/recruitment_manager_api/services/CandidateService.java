@@ -3,6 +3,8 @@ package com.damian3111.recruitment_manager_api.services;
 import com.damian3111.recruitment_manager_api.persistence.entities.CandidateEntity;
 import com.damian3111.recruitment_manager_api.persistence.entities.CandidateSkill;
 import com.damian3111.recruitment_manager_api.persistence.repositories.CandidateRepository;
+import com.damian3111.recruitment_manager_api.persistence.repositories.CandidateSkillRepository;
+import com.damian3111.recruitment_manager_api.persistence.repositories.SkillRepository;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -20,26 +22,20 @@ import java.util.Optional;
 public class CandidateService {
 
     private final CandidateRepository candidateRepository;
-
+    private final CandidateSkillRepository candidateSkillRepository;
+    private final SkillRepository skillRepository;
     public List<CandidateEntity> getAllCandidates() {
         return candidateRepository.findAll();
     }
-//    public Page<T> findAll(Specification<T> specification, Pageable pageable) {
-//        return this.entityRepository.findAll(specification, pageable);
-//    }
-
     public Page<CandidateEntity> getCandidatesFiltered(Specification<CandidateEntity> specification, Pageable pageable) {
         return candidateRepository.findAll(specification, pageable);
     }
-
     public Optional<CandidateEntity> getCandidateById(Long id) {
         return candidateRepository.findById(id);
     }
-
     public CandidateEntity createCandidate(CandidateEntity candidate) {
         return candidateRepository.save(candidate);
     }
-
     public CandidateEntity updateCandidate(Long id, CandidateEntity candidate, CandidateDto updated) {
 
             candidate.setPhone(updated.getPhone());
@@ -62,7 +58,7 @@ public class CandidateService {
 
 //
 //    @Transactional
-//    public CandidateEntity updateCandidate(Long id, CandidateEntity candidateEntity) {
+//    public CandidateEntity updateCandidate(Long id, CandidateDto candidateEntity) {
 //        if (!id.equals(candidateEntity.getId())) {
 //            throw new IllegalArgumentException("ID mismatch");
 //        }
@@ -86,17 +82,18 @@ public class CandidateService {
 //        existing.setProjects(candidateEntity.getProjects());
 //        existing.setMediaUrl(candidateEntity.getMediaUrl());
 //        existing.setSalaryExpectation(candidateEntity.getSalaryExpectation());
-//        existing.setWorkStyle(candidateEntity.getWorkStyle());
+//        existing.setWorkStyle(candidateEntity.getWorkStyle().getValue());
 //        existing.setAppliedDate(candidateEntity.getAppliedDate());
 //        existing.setLocation(candidateEntity.getLocation());
 //
 //        // Update skills in-place
 //        existing.getSkills().clear(); // Clear existing skills
 //        for (CandidateSkill skill : candidateEntity.getSkills()) {
+//            skillRepository.findByName(s.)
 //            skill.setCandidate(existing); // Ensure candidate reference
 //            existing.getSkills().add(skill); // Add to existing collection
 //        }
-//
+//        candidateSkillRepository.saveAll(existing.getSkills());
 //        return candidateRepository.save(existing);
 //    }
     public Optional<CandidateEntity> getCandidateByEmail(String email) {
