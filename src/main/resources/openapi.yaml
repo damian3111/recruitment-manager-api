@@ -633,6 +633,75 @@ paths:
               schema:
                 type: string
                 example: Invalid token
+  /api-auth/login:
+    post:
+      summary: Login a user
+      operationId: loginUser
+      tags:
+        - auth
+      parameters:
+        - name: Cookie
+          in: header
+          description: Optional cookies from the request (HttpServletRequest)
+          required: false
+          schema:
+            type: string
+            example: authToken=eyJhbGciOi...
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginUserDto'
+      responses:
+        '200':
+          description: JWT token returned and set in cookie (via HttpServletResponse)
+          headers:
+            Set-Cookie:
+              description: Sets the authToken cookie with JWT
+              schema:
+                type: string
+                example: authToken=eyJhbGciOi...; HttpOnly; Secure; Path=/; Max-Age=3600
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: eyJhbGciOi...
+        '400':
+          description: Invalid credentials
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: Invalid email or password
+  /api-auth/logout:
+    post:
+      summary: Logout user
+      operationId: logoutUser
+      tags:
+        - auth
+      parameters:
+        - name: Cookie
+          in: header
+          description: Optional authToken cookie from the request (HttpServletRequest)
+          required: false
+          schema:
+            type: string
+            example: authToken=eyJhbGciOi...
+      responses:
+        '200':
+          description: User logged out, authToken cookie removed (via HttpServletResponse)
+          headers:
+            Set-Cookie:
+              description: Clears the authToken cookie
+              schema:
+                type: string
+                example: authToken=; HttpOnly; Secure; Path=/; Max-Age=0
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: Logged out successfully
 components:
   securitySchemes:
     bearerAuth:
@@ -857,6 +926,22 @@ components:
         totalPages:
           type: integer
           format: int64
+    JobDtoSkillsInner:
+      type: object
+      properties:
+        name:
+          type: string
+        proficiencyLevel:
+          type: string
+          enum: [ Beginner, Familiar, Good, Expert ]
+    CandidateDtoSkillsInner:
+      type: object
+      properties:
+        name:
+          type: string
+        proficiencyLevel:
+          type: string
+          enum: [ Beginner, Familiar, Good, Expert ]
     CandidateFilter:
       type: object
       properties:
@@ -901,13 +986,7 @@ components:
         skills:
           type: array
           items:
-            type: object
-            properties:
-              name:
-                type: string
-              proficiency_level:
-                type: string
-                enum: [ Beginner, Familiar, Good, Expert ]
+            $ref: '#/components/schemas/CandidateDtoSkillsInner'
       required: [ ]
     JobFilter:
       type: object
@@ -945,13 +1024,7 @@ components:
         skills:
           type: array
           items:
-            type: object
-            properties:
-              name:
-                type: string
-              proficiency_level:
-                type: string
-                enum: [ Beginner, Familiar, Good, Expert ]
+            $ref: '#/components/schemas/JobDtoSkillsInner'
       required: [ ]
     Pageable:
       description: minimal Pageable query parameters
