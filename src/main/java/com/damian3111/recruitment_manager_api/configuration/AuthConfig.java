@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.Customizer;
@@ -23,6 +24,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import java.util.List;
 
+@Profile("!test")
 @RequiredArgsConstructor
 @Configuration
 public class AuthConfig {
@@ -65,6 +67,7 @@ public class AuthConfig {
                             "/oauth2/**",
                             "/login/oauth2/**",
                             "/auth/**",
+                            "/api/auth/**",
                             "/error"
                     ).permitAll();
                         auth.anyRequest().authenticated();
@@ -93,5 +96,4 @@ public class AuthConfig {
         source.registerCorsConfiguration("/**", configuration);
         return source;
     }
-
 }
