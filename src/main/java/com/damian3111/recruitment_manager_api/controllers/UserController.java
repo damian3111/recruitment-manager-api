@@ -22,22 +22,10 @@ public class UserController implements UsersApi {
 
     private final UserService userService;
     private final ModelMapper modelMapper;
-    private final CustomEmailService customEmailService;
 
     @Override
     public ResponseEntity<User> addUser(@RequestBody User user) {
-        UserEntity build = UserEntity.builder()
-                .email(user.getEmail())
-                .password(user.getPassword())
-                .firstName(user.getFirstName())
-                .lastName(user.getLastName())
-                .role(modelMapper.map(user.getUserRole(), UserRole.class))
-                .build();
-
-        UserEntity userEntity = userService.addUser(build);
-        customEmailService.sendConfirmationEmail(userEntity);
-
-        return ResponseEntity.ok(modelMapper.map(userEntity, User.class));
+        return ResponseEntity.ok(modelMapper.map(userService.addUser(user), User.class));
     }
 
     @Override
@@ -51,8 +39,6 @@ public class UserController implements UsersApi {
         if (authentication == null || !authentication.isAuthenticated()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-
-        String email = authentication.getName();
-        return ResponseEntity.ok(modelMapper.map(userService.getUserByEmail(email), User.class));
+        return ResponseEntity.ok(modelMapper.map(userService.getUserByEmail(authentication.getName()), User.class));
     }
 }
