@@ -46,106 +46,43 @@ public class JobController implements JobsApi {
 
     @Override
     public ResponseEntity<List<JobDto>> getAllJobs() {
-        List<JobEntity> jobEntities = jobRepository.findAll();
-        List<JobDto> jobDtos = jobEntities.stream()
+        return ResponseEntity.ok(jobRepository.findAll().stream()
                 .map(this::mapToJobDto)
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(jobDtos);
+                .collect(Collectors.toList()));
     }
 
     @Override
     public ResponseEntity<JobsPage> filterJobs(JobFilter filter, Pageable pageable) {
-        Page<JobEntity> entityPage = jobService.getCandidatesFiltered(getSpecification(filter), pageable);
-        JobsPage jobsPage = modelMapper.map(entityPage, JobsPage.class);
-        return ResponseEntity.ok(jobsPage);
+        return ResponseEntity.ok(modelMapper.map(
+                jobService.getCandidatesFiltered(filter, pageable), JobsPage.class)
+        );
     }
 
     @Override
     public ResponseEntity<List<JobDto>> getJobsByUserId(Long userId) {
-        log.info("Fetching jobs for user ID: {}", userId);
-        List<JobEntity> jobEntities = jobRepository.findByUserId(userId)
-                .orElseThrow(() -> new EntityNotFoundException("No jobs found for user ID: " + userId));
-        List<JobDto> jobDtos = jobEntities.stream()
+        return ResponseEntity.ok(jobService.getJobsByUserId(userId).stream()
                 .map(this::mapToJobDto)
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(jobDtos);
+                .collect(Collectors.toList()));
     }
 
     @Override
     public ResponseEntity<JobDto> createJob(JobDto jobDto) {
-        //TEMPORARY CONFIG
-        JobEntity map = modelMapper.map(jobDto, JobEntity.class);
-        map.setCompanyName("sdds");
-        map.setPostedDate(LocalDate.now());
-        map.setApplicationDeadline(LocalDate.now());
-
-        String name = SecurityContextHolder.getContext().getAuthentication().getName();
-        UserEntity userEntity = userService.getUserByEmail(name);
-
-        ArrayList<ArrayList> skillEntities = new ArrayList<>();
-        map.setUser(userEntity);
-        map.setSkills(new ArrayList<>());
-        JobEntity jobEntity = jobRepository.save(map);
-
-        jobDto.getSkills().forEach(s -> {
-            ArrayList<Object> objects = new ArrayList<>();
-            objects.add(skillService.findByName(s.getName()));
-            objects.add(s.getProficiencyLevel().getValue());
-            skillEntities.add(objects);
-        });
-
-        ArrayList<JobSkill> jobSkills = new ArrayList<>();
-
-        skillEntities.forEach(s -> {
-            SkillEntity skill = (SkillEntity) s.get(0);
-            String proficiencyLevel = (String) s.get(1);
-            JobSkill newSkill = JobSkill.builder()
-                    .skill(skill)
-                    .job(jobEntity)
-                    .proficiencyLevel(proficiencyLevel)
-                    .build();
-            jobSkillRepository.save(newSkill);
-            jobSkills.add(newSkill);
-        });
-
-        List<JobSkill> skills = jobEntity.getSkills();
-        skills.clear();
-        skills.addAll(jobSkills);
-
-        return ResponseEntity.ok(null);
+        return ResponseEntity.ok(modelMapper.map(jobService.createJob(jobDto), JobDto.class));
     }
 
     @Override
     public ResponseEntity<Void> deleteJob(Long id) {
-        log.info("Deleting job with ID: {}", id);
-        if (!jobRepository.existsById(id)) {
-            throw new EntityNotFoundException("Job not found with ID: " + id);
-        }
-        jobRepository.deleteById(id);
+        jobService.deleteJob(id);
         return ResponseEntity.noContent().build();
     }
     @Override
     public ResponseEntity<JobDto> getJobById(Long id) {
-        log.info("Fetching job with ID: {}", id);
-        JobEntity jobEntity = jobRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Job not found with ID: " + id));
-        JobDto jobDto = mapToJobDto(jobEntity);
-        return ResponseEntity.ok(jobDto);
+        return ResponseEntity.ok(mapToJobDto(jobService.getJobById(id)));
     }
 
     @Override
     public ResponseEntity<JobDto> updateJob(Long id, @Valid JobDto jobDto) {
-        log.info("Updating job with ID: {}", id);
-        JobEntity jobEntity = jobRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Job not found with ID: " + id));
-
-        modelMapper.map(jobDto, jobEntity);
-        List<JobSkill> newSkills = mapSkills(jobDto.getSkills(), jobEntity);
-        updateJobSkills(jobEntity, newSkills);
-
-        JobEntity updatedEntity = jobRepository.save(jobEntity);
-        JobDto updatedDto = mapToJobDto(updatedEntity);
-        return ResponseEntity.ok(updatedDto);
+        return ResponseEntity.ok(jobService.updateJob(id, jobDto));
     }
 
     private JobDto mapToJobDto(JobEntity jobEntity) {
@@ -157,77 +94,5 @@ public class JobController implements JobsApi {
                 .collect(Collectors.toList());
         jobDto.setSkills(skills);
         return jobDto;
-    }
-
-    private List<JobSkill> mapSkills(List<JobDtoSkillsInner> skillDtos, JobEntity job) {
-        if (skillDtos == null || skillDtos.isEmpty()) {
-            return List.of();
-        }
-
-        return skillDtos.stream()
-                .filter(skillDto -> skillDto.getName() != null)
-                .map(skillDto -> {
-                    SkillEntity skillEntity = skillService.findOrCreateSkill(skillDto.getName());
-                    String proficiencyLevel = Optional.ofNullable(skillDto.getProficiencyLevel())
-                            .map(JobDtoSkillsInner.ProficiencyLevelEnum::getValue)
-                            .orElse("Beginner");
-
-                    if (!VALID_PROFICIENCY_LEVELS.contains(proficiencyLevel)) {
-                        throw new IllegalArgumentException("Invalid proficiency level: " + proficiencyLevel);
-                    }
-
-                    return JobSkill.builder()
-                            .job(job)
-                            .skill(skillEntity)
-                            .proficiencyLevel(proficiencyLevel)
-                            .build();
-                })
-                .collect(Collectors.toList());
-    }
-
-    private void updateJobSkills(JobEntity job, List<JobSkill> newSkills) {
-    }
-
-    private Specification<JobEntity> getSpecification(JobFilter filter) {
-        JobSpecification factory = this.jobSpecification;
-        return Specification.where(Optional.ofNullable(filter.getTitle())
-                        .map(v -> factory.propertyLikeIgnoreCase("title", v))
-                        .orElse(factory.empty()))
-                .and(Optional.ofNullable(filter.getEmploymentType())
-                        .map(v -> factory.propertyLikeIgnoreCase("employmentType", v))
-                        .orElse(factory.empty()))
-                .and(Optional.ofNullable(filter.getLocation())
-                        .map(v -> factory.propertyLikeIgnoreCase("location", v))
-                        .orElse(factory.empty()))
-                .and(Optional.ofNullable(filter.getSalaryMin())
-                        .map(v -> factory.propertyGreaterOrEqual("salaryMin", v))
-                        .orElse(factory.empty()))
-                .and(Optional.ofNullable(filter.getSalaryMax())
-                        .map(v -> factory.propertyLessOrEqual("salaryMax", v))
-                        .orElse(factory.empty()))
-                .and(Optional.ofNullable(filter.getCurrency())
-                        .map(v -> factory.propertyLikeIgnoreCase("currency", v))
-                        .orElse(factory.empty()))
-                .and(Optional.ofNullable(filter.getExperienceLevel())
-                        .map(v -> factory.propertyLikeIgnoreCase("experienceLevel", v))
-                        .orElse(factory.empty()))
-                .and(Optional.ofNullable(filter.getIndustry())
-                        .map(v -> factory.propertyLikeIgnoreCase("industry", v))
-                        .orElse(factory.empty()))
-                .and(Optional.ofNullable(filter.getCompanyName())
-                        .map(v -> factory.propertyLikeIgnoreCase("companyName", v))
-                        .orElse(factory.empty()))
-                .and(Optional.ofNullable(filter.getEmploymentMode())
-                        .map(v -> factory.propertyLikeIgnoreCase("employmentMode", v.toString()))
-                        .orElse(factory.empty()))
-                .and(Optional.ofNullable(filter.getPostedDate())
-                        .map(v -> factory.propertyLikeIgnoreCase("postedDate", v.toString()))
-                        .orElse(factory.empty()))
-                .and(Optional.ofNullable(filter.getApplicationDeadline())
-                        .map(v -> factory.propertyLikeIgnoreCase("applicationDeadline", v.toString()))
-                        .orElse(factory.empty()))
-                .and(Optional.ofNullable(filter.getSkills())
-                        .map(factory::propertyInSkills)
-                        .orElse(factory.empty()));
     }
 }
