@@ -4,7 +4,9 @@ import com.damian3111.recruitment_manager_api.persistence.entities.UserEntity;
 import com.damian3111.recruitment_manager_api.persistence.entities.UserRole;
 import com.damian3111.recruitment_manager_api.persistence.repositories.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.modelmapper.ModelMapper;
 import org.openapitools.model.LoginUserDto;
+import org.openapitools.model.User;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -18,6 +20,8 @@ public class UserService {
     private final UserRepository userRepository;
     private final AuthenticationProvider authenticationProvider;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
+    private final ModelMapper modelMapper;
+    private final CustomEmailService customEmailService;
 
     public UserEntity loadOrCreateUserFromOAuth(String email) {
         return userRepository.findUserEntityByEmail(email)
@@ -30,10 +34,20 @@ public class UserService {
                     return userRepository.save(user);
                 });
     }
+    public UserEntity addUser(User user) {
+        UserEntity build = UserEntity.builder()
+                .email(user.getEmail())
+                .password(user.getPassword())
+                .firstName(user.getFirstName())
+                .lastName(user.getLastName())
+                .role(modelMapper.map(user.getUserRole(), UserRole.class))
+                .build();
 
-    public UserEntity addUser(UserEntity user) {
-        user.setPassword(bCryptPasswordEncoder.encode(user.getPassword()));
-        return userRepository.save(user);
+        build.setPassword(bCryptPasswordEncoder.encode(user.getPassword()));
+        userRepository.save(build);
+        customEmailService.sendConfirmationEmail(build);
+
+        return build;
     }
 
     public UserEntity authenticate(LoginUserDto loginUserDto) {
