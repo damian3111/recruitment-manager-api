@@ -1,8 +1,11 @@
 package com.damian3111.recruitment_manager_api.persistence.specification;
 
 import com.damian3111.recruitment_manager_api.persistence.entities.CandidateSkill;
+import com.damian3111.recruitment_manager_api.persistence.entities.JobEntity;
+import com.damian3111.recruitment_manager_api.persistence.entities.JobSkill;
 import com.damian3111.recruitment_manager_api.persistence.entities.SkillEntity;
 import jakarta.persistence.criteria.*;
+import org.openapitools.model.CandidateDtoSkillsInner;
 import org.openapitools.model.JobDtoSkillsInner;
 import org.springframework.data.jpa.domain.Specification;
 
@@ -69,39 +72,6 @@ public interface BaseSpecification <T, K> {
         }
     }
 
-    default Specification<T> propertyInSkills(List<JobDtoSkillsInner> skills) {
-        return (root, cq, cb) -> {
-            if (skills == null || skills.isEmpty()) {
-                return cb.conjunction();
-            }
-
-            Join<T, CandidateSkill> candidateSkillJoin = root.join("skills");
-            Join<CandidateSkill, SkillEntity> skillJoin = candidateSkillJoin.join("skill");
-
-            List<Predicate> predicates = skills.stream()
-                    .filter(skill -> skill.getName() != null) // Skip null names
-                    .map(skill -> {
-                        Predicate namePredicate = cb.equal(
-                                cb.lower(skillJoin.get("name")),
-                                skill.getName().toLowerCase()
-                        );
-
-                        if (skill.getProficiencyLevel() != null) {
-                            return cb.and(
-                                    namePredicate,
-                                    cb.equal(
-                                            candidateSkillJoin.get("proficiencyLevel"),
-                                            skill.getProficiencyLevel().toString() // Convert enum to String
-                                    )
-                            );
-                        }
-                        return namePredicate;
-                    })
-                    .collect(Collectors.toList());
-
-            return cb.or(predicates.toArray(new Predicate[0]));
-        };
-    }
     default Predicate getPredicateGreaterOrEqual(CriteriaBuilder cb, Path<?> path, Integer search) {
             return cb.greaterThanOrEqualTo(path.as(Integer.class), search);
     }
