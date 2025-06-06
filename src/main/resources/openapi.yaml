@@ -399,7 +399,7 @@ paths:
   /jobs/{id}:
     get:
       summary: Get job by IDD
-      operationId: getJobById.
+      operationId: getJobById
       tags:
         - jobs
       parameters:
