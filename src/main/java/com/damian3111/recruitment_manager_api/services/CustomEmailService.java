@@ -3,9 +3,11 @@ package com.damian3111.recruitment_manager_api.services;
 import com.damian3111.recruitment_manager_api.persistence.entities.EmailConfirmationToken;
 import com.damian3111.recruitment_manager_api.persistence.entities.UserEntity;
 import com.damian3111.recruitment_manager_api.persistence.repositories.EmailConfirmationTokenRepository;
+import com.damian3111.recruitment_manager_api.persistence.repositories.UserRepository;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
@@ -19,6 +21,7 @@ public class CustomEmailService {
 
     private final JavaMailSender mailSender;
     private final EmailConfirmationTokenRepository confirmationTokenRepository;
+    private final UserRepository userRepository;
 
     public void sendConfirmationEmail(UserEntity user) {
         if (user.isEmailConfirmed()) return;
@@ -53,6 +56,20 @@ public class CustomEmailService {
         helper.setText(htmlContent, true);
 
         mailSender.send(message);
+    }
+
+    public void confirmEmail(String token) {
+        EmailConfirmationToken confirmationToken = confirmationTokenRepository.findByToken(token)
+                .orElseThrow(() -> new RuntimeException("Invalid token"));
+
+        if (confirmationToken.getExpiresAt().isBefore(LocalDateTime.now())) {
+            throw new RuntimeException("Token has expired");
+        }
+
+        UserEntity user = confirmationToken.getUser();
+        user.setEmailConfirmed(true);
+        userRepository.save(user);
+        confirmationTokenRepository.delete(confirmationToken);
     }
 
     private String buildHtmlEmail(String name, String link) {
