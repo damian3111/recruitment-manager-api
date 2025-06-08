@@ -60,7 +60,7 @@ paths:
           description: User not found
   /users/me:
     get:
-      summary: Get currently authenticated user
+      summary: Get currently authenticated user.
       operationId: getCurrentUser
       tags:
         - users

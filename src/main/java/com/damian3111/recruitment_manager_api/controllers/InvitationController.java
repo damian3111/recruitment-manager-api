@@ -38,6 +38,7 @@ public class InvitationController implements InvitationsApi {
 
     @Override
     public ResponseEntity<List<InvitationDto>> getInvitationsByRecruiterId(Long recruiterId) {
+        //
         return ResponseEntity.ok(invitationService.getInvitationsByRecruiter(recruiterId).orElseThrow()
                 .stream().map(i -> modelMapper.map(i, InvitationDto.class)).collect(Collectors.toList()));
     }
