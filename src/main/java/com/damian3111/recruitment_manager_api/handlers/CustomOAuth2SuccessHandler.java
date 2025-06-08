@@ -11,6 +11,8 @@ import org.springframework.security.web.authentication.AuthenticationSuccessHand
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 
 @
 Component
@@ -28,13 +30,15 @@ public class CustomOAuth2SuccessHandler implements AuthenticationSuccessHandler 
     public void onAuthenticationSuccess(HttpServletRequest request,
                                         HttpServletResponse response,
                                         Authentication authentication) throws IOException {
-
         OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
         String email = oAuth2User.getAttribute("email");
         UserEntity userEntity = userService.loadOrCreateUserFromOAuth(email);
         String jwtToken = jwtService.handleLogin(userEntity, response);
 
-        response.sendRedirect("http://localhost:3000/dashboard");
+        String encodedToken = URLEncoder.encode(jwtToken, StandardCharsets.UTF_8.toString());
+
+        String redirectUrl = "https://damiankwasny.pl/login?token=" + encodedToken;
+        response.sendRedirect(redirectUrl);
     }
 }
 
