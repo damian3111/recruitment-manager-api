@@ -40,4 +40,14 @@ public class AuthController {
 
         return ResponseEntity.ok("Logged out successfully");
     }
+
+    @PostMapping("/oauth-login")
+    public ResponseEntity<String> handleOAuthLogin(@RequestParam String token, HttpServletResponse response) {
+        // Validate the OAuth token (e.g., verify with Google)
+        // For simplicity, assume the token is the JWT from onAuthenticationSuccess
+        String jwtToken = token; // In a real scenario, validate and generate a new JWT if needed
+
+        // Optionally, set the cookie in the backend (but we'll let the frontend handle it)
+        return ResponseEntity.ok(jwtToken);
+    }
 }
