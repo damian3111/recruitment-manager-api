@@ -39,6 +39,8 @@ public class CustomOAuth2SuccessHandler implements AuthenticationSuccessHandler 
         String encodedToken = URLEncoder.encode(jwtToken, StandardCharsets.UTF_8.toString());
 
         String redirectUrl = "https://damiankwasny.pl/login?token=" + jwtToken;
+        response.setHeader("Set-Cookie", "authToken=" + jwtToken + "; Path=/; Max-Age=3600; HttpOnly; Secure; SameSite=None");
+
         response.sendRedirect(redirectUrl);
     }
 }
