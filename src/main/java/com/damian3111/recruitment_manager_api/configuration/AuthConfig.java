@@ -68,6 +68,7 @@ public class AuthConfig {
                             "/login/oauth2/**",
                             "/auth/**",
                             "/api/auth/**",
+                            "email/**",
                             "/error"
                     ).permitAll();
                         auth.anyRequest().authenticated();
