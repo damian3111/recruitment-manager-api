@@ -40,7 +40,7 @@ public class CustomOAuth2SuccessHandler implements AuthenticationSuccessHandler 
 
         String encodedToken = URLEncoder.encode(jwtToken, StandardCharsets.UTF_8.toString());
 
-        String redirectUrl = "https://damiankwasny.pl/login?token=" + jwtToken;
+        String redirectUrl = "https://damiankwasny.pl/home";
 //        response.sendRedirect(redirectUrl);
 
 
