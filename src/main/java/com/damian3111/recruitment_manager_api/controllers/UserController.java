@@ -16,6 +16,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.NoSuchElementException;
+
 @RequiredArgsConstructor
 @RestController
 public class UserController implements UsersApi {
@@ -37,8 +39,17 @@ public class UserController implements UsersApi {
     public ResponseEntity<User> getCurrentUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !authentication.isAuthenticated()) {
+            System.out.println("Authentication is null or not authenticated");
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-        return ResponseEntity.ok(modelMapper.map(userService.getUserByEmail(authentication.getName()), User.class));
+        String principalName = authentication.getName();
+        System.out.println("Principal name: {}" + principalName);
+        try {
+            UserEntity user = userService.getUserByEmail(principalName);
+            return ResponseEntity.ok(modelMapper.map(user, User.class));
+        } catch (NoSuchElementException e) {
+            System.out.println("User not found for principal: {}" + principalName +", " + e);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
     }
 }
