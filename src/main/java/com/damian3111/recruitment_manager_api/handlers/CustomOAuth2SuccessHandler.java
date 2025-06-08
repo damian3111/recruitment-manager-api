@@ -32,26 +32,13 @@ public class CustomOAuth2SuccessHandler implements AuthenticationSuccessHandler 
                                         Authentication authentication) throws IOException {
         OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
         String email = oAuth2User.getAttribute("email");
-        String principalName = authentication.getName();
-        System.out.println("OAuth2 email: {}, Principal name: {}" + email + principalName);
-        if (email == null) {
-            System.out.println("Email not found in OAuth2 attributes");
-            response.sendRedirect("https://damiankwasny.pl/login?error=no_email");
-            return;
-        }
-        try {
-            UserEntity userEntity = userService.loadOrCreateUserFromOAuth(email);
-            System.out.println("User created/found: {}" +  userEntity.getEmail());
-            String jwtToken = jwtService.handleLogin(userEntity, response);
-            String encodedToken = URLEncoder.encode(jwtToken, StandardCharsets.UTF_8.toString());
-            String redirectUrl = System.getenv("FRONTEND_URL") != null
-                    ? System.getenv("FRONTEND_URL") + "/login?token=" + encodedToken
-                    : "https://damiankwasny.pl/login?token=" + encodedToken;
-            response.sendRedirect(redirectUrl);
-        } catch (Exception e) {
-            System.out.println("Error processing OAuth2 login: {}"+ e.getMessage() + e);
-            response.sendRedirect("http://localhost:3000/login?error=auth_failed");
-        }
+        UserEntity userEntity = userService.loadOrCreateUserFromOAuth(email);
+        String jwtToken = jwtService.handleLogin(userEntity, response);
+
+        String encodedToken = URLEncoder.encode(jwtToken, StandardCharsets.UTF_8.toString());
+
+        String redirectUrl = "https://damiankwasny.pl/login?token=" + encodedToken;
+        response.sendRedirect(redirectUrl);
     }
 }
 

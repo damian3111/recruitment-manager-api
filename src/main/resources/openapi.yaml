@@ -896,7 +896,7 @@ components:
             properties:
               name:
                 type: string
-              proficiency_level:
+              proficiencyLevel:
                 type: string
                 enum: [ Beginner, Familiar, Good, Expert ]
     CandidatesPage:
