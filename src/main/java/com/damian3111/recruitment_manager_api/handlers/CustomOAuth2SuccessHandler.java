@@ -3,6 +3,7 @@ package com.damian3111.recruitment_manager_api.handlers;
 import com.damian3111.recruitment_manager_api.persistence.entities.UserEntity;
 import com.damian3111.recruitment_manager_api.services.JWTService;
 import com.damian3111.recruitment_manager_api.services.UserService;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.core.Authentication;
@@ -25,14 +26,12 @@ public class CustomOAuth2SuccessHandler implements AuthenticationSuccessHandler 
         this.jwtService = jwtService;
         this.userService = userService;
     }
-
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request,
                                         HttpServletResponse response,
                                         Authentication authentication) throws IOException {
         OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
         String email = oAuth2User.getAttribute("email");
-        String principalName = authentication.getName();
 
         if (email == null) {
             response.sendRedirect("https://damiankwasny.pl/login?error=no_email");
@@ -42,13 +41,22 @@ public class CustomOAuth2SuccessHandler implements AuthenticationSuccessHandler 
         try {
             UserEntity userEntity = userService.loadOrCreateUserFromOAuth(email);
             String jwtToken = jwtService.handleLogin(userEntity, response);
-            String encodedToken = URLEncoder.encode(jwtToken, StandardCharsets.UTF_8.toString());
 
-            String redirectUrl = "https://damiankwasny.pl/login?token=" + encodedToken;
-            response.sendRedirect(redirectUrl);
+            // Set JWT token in a secure, HttpOnly cookie
+            Cookie cookie = new Cookie("authToken", jwtToken);
+            cookie.setHttpOnly(true); // Prevents JavaScript access
+            cookie.setSecure(true); // Requires HTTPS
+            cookie.setPath("/"); // Available for all paths
+            cookie.setMaxAge(3600); // 1 hour expiry
+            cookie.setAttribute("SameSite", "None"); // Required for cross-site redirects
+            response.addCookie(cookie);
+
+            // Redirect to frontend without token in URL
+            response.sendRedirect("https://damiankwasny.pl/login?success=true");
         } catch (Exception e) {
+            // Log the exception for debugging
+            e.printStackTrace();
             response.sendRedirect("https://damiankwasny.pl/login?error=auth_failed");
         }
-    }
-}
+    }}
 
