@@ -21,10 +21,10 @@ public class EmailController implements EmailApi {
     @Override
     public ResponseEntity<String> confirmEmail(String token) {
         EmailConfirmationToken confirmationToken = emailConfirmationTokenRepository.findByToken(token)
-                .orElseThrow(() -> new RuntimeException("Invalid token"));
+                .orElseThrow(() -> new RuntimeException("Temporary Email Confirmation Page\n\n Message: Invalid token"));
 
         if (confirmationToken.getExpiresAt().isBefore(LocalDateTime.now())) {
-            return ResponseEntity.badRequest().body("Token expired");
+            return ResponseEntity.badRequest().body("Temporary Email Confirmation Page\n\n Message: Token expired");
         }
 
         UserEntity user = confirmationToken.getUser();
@@ -32,6 +32,6 @@ public class EmailController implements EmailApi {
         userRepository.save(user);
         emailConfirmationTokenRepository.delete(confirmationToken);
 
-        return ResponseEntity.ok("Email confirmed");    }
+        return ResponseEntity.ok("Temporary Email Confirmation Page\n\n Message: Email confirmed");    }
 }
 
