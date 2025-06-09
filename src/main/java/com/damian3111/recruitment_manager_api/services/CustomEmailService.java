@@ -7,13 +7,17 @@ import com.damian3111.recruitment_manager_api.persistence.repositories.UserRepos
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 @RequiredArgsConstructor
 @Service
@@ -22,9 +26,13 @@ public class CustomEmailService {
     private final JavaMailSender mailSender;
     private final EmailConfirmationTokenRepository confirmationTokenRepository;
     private final UserRepository userRepository;
+    private static final Logger log = LoggerFactory.getLogger(CustomEmailService.class);
 
-    public void sendConfirmationEmail(UserEntity user) {
-        if (user.isEmailConfirmed()) return;
+    @Async
+    public CompletableFuture<Void> sendConfirmationEmail(UserEntity user) {
+        if (user.isEmailConfirmed()) {
+            return CompletableFuture.completedFuture(null);
+        }
 
         String token = UUID.randomUUID().toString();
         EmailConfirmationToken confirmationToken = new EmailConfirmationToken();
@@ -42,11 +50,12 @@ public class CustomEmailService {
                     "Confirm your email",
                     buildHtmlEmail(user.getFirstName(), link)
             );
+            return CompletableFuture.completedFuture(null);
         } catch (MessagingException e) {
-            throw new RuntimeException("Failed to send email", e);
+            log.error("Failed to send confirmation email to {}: {}", user.getEmail(), e.getMessage());
+            return CompletableFuture.failedFuture(new RuntimeException("Failed to send email", e));
         }
     }
-
     private void sendHtmlEmail(String to, String subject, String htmlContent) throws MessagingException {
         MimeMessage message = mailSender.createMimeMessage();
         MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");

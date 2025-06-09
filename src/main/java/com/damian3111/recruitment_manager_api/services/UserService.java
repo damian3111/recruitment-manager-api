@@ -9,12 +9,14 @@ import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.openapitools.model.LoginUserDto;
 import org.openapitools.model.User;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.slf4j.Logger;
 
 @RequiredArgsConstructor
 @Service
@@ -25,6 +27,7 @@ public class UserService {
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
     private final ModelMapper modelMapper;
     private final CustomEmailService customEmailService;
+    private static final Logger log = LoggerFactory.getLogger(CustomEmailService.class);
 
     public UserEntity loadOrCreateUserFromOAuth(String email) {
         return userRepository.findUserEntityByEmail(email)
@@ -50,8 +53,11 @@ public class UserService {
 
         build.setPassword(bCryptPasswordEncoder.encode(user.getPassword()));
         userRepository.save(build);
-        customEmailService.sendConfirmationEmail(build);
-
+        customEmailService.sendConfirmationEmail(build)
+                .exceptionally(throwable -> {
+                    log.error("Email sending failed for user {}: {}", user.getEmail(), throwable.getMessage());
+                    return null;
+                });
         return build;
     }
 
