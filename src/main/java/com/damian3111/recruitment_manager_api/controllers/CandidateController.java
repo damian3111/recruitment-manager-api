@@ -1,7 +1,6 @@
 package com.damian3111.recruitment_manager_api.controllers;
 
 import com.damian3111.recruitment_manager_api.persistence.entities.CandidateEntity;
-import com.damian3111.recruitment_manager_api.persistence.specification.CandidatesSpecification;
 import com.damian3111.recruitment_manager_api.services.CandidateService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -52,7 +51,7 @@ public class CandidateController implements CandidatesApi {
         } catch (EntityNotFoundException e) {
 //            Map<String, String> errorResponse = new HashMap<>();
 //            errorResponse.put("message", null);
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
     }
 
