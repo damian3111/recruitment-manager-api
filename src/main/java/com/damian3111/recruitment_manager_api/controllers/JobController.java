@@ -37,10 +37,6 @@ public class JobController implements JobsApi {
     private final JobRepository jobRepository;
     private final JobService jobService;
     private final ModelMapper modelMapper;
-    private final JobSpecification jobSpecification;
-    private final JobSkillRepository jobSkillRepository;
-    private final SkillService skillService;
-    private final UserService userService;
 
     private static final List<String> VALID_PROFICIENCY_LEVELS = List.of("Beginner", "Familiar", "Good", "Expert");
 
@@ -54,15 +50,23 @@ public class JobController implements JobsApi {
     @Override
     public ResponseEntity<JobsPage> filterJobs(JobFilter filter, Pageable pageable) {
         return ResponseEntity.ok(modelMapper.map(
-                jobService.getCandidatesFiltered(filter, pageable), JobsPage.class)
+                jobService.getJobsFiltered(filter, pageable), JobsPage.class)
         );
     }
 
     @Override
     public ResponseEntity<List<JobDto>> getJobsByUserId(Long userId) {
-        return ResponseEntity.ok(jobService.getJobsByUserId(userId).stream()
+        try {
+            return ResponseEntity.ok(jobService.getJobsByUserId(userId).stream()
                 .map(this::mapToJobDto)
                 .collect(Collectors.toList()));
+        } catch (EntityNotFoundException e) {
+            log.info("No jobs found for user ID: {}", userId);
+            return ResponseEntity.status(404).build();
+        } catch (IllegalArgumentException e) {
+            log.warn("Invalid user ID: {}", userId);
+            return ResponseEntity.badRequest().build();
+        }
     }
 
     @Override
