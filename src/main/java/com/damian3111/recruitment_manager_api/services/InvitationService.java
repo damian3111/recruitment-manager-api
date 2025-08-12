@@ -42,8 +42,8 @@ public class InvitationService {
         JobEntity job = jobRepository.findById(dto.getJobId())
                 .orElseThrow(() -> new RuntimeException("Job not found"));
 
-        Optional<List<InvitationEntity>> byCandidateEmailOrJobUserEmail2 = invitationRepository.findByCandidateEmailOrJobUserEmail2(candidate.getId(), job.getId());
-        if (!byCandidateEmailOrJobUserEmail2.get().isEmpty())
+        Optional<List<InvitationEntity>> invitationEntityList = invitationRepository.findByCandidateIdAndJobId(candidate.getId(), job.getId());
+        if (!invitationEntityList.get().isEmpty())
             throw new RuntimeException("Invitation already exissts");
 
         invitation.setJob(job);
@@ -82,8 +82,7 @@ public class InvitationService {
     }
 
     private Optional<List<InvitationEntity>> getInvitationsReceivedByRecruited(Long recruiterId, String email) {
-        //up
-        return invitationRepository.findByCandidate(recruiterId, email);
+        return invitationRepository.findByCandidateEmailAndRecruiterId(recruiterId, email);
     }
 
     public Optional<List<InvitationEntity>> getInvitationsReceivedByRecruited2(Long recruiterId, String email) {
@@ -97,7 +96,6 @@ public class InvitationService {
         }
     }
     public Optional<List<InvitationEntity>> getAcceptedInvitations(Long recruiterId, String email) {
-        //up
         return invitationRepository.findByCandidate2(recruiterId, email, InvitationStatus.ACCEPTED);
     }
 
