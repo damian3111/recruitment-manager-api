@@ -14,6 +14,10 @@ import org.modelmapper.ModelMapper;
 import org.openapitools.model.CandidateDto;
 import org.openapitools.model.CandidateFilter;
 import org.openapitools.model.JobDtoSkillsInner;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -34,22 +38,30 @@ public class CandidateService {
     private final SkillService skillService;
     private final ModelMapper modelMapper;
     private final CandidatesSpecification candidatesSpecification;
+
+    @Cacheable(value = "candidatesList", key = "'allCandidates'")
     public List<CandidateEntity> getAllCandidates() {
         return candidateRepository.findAll();
     }
+//    @Cacheable(value = "candidatesPage", key = "'sdsdsd'")
     public Page<CandidateEntity> getCandidatesFiltered(CandidateFilter filter, Pageable pageable) {
         return candidateRepository.findAll(getSpecification(filter), pageable);
     }
+    @Cacheable(value = "candidates", key = "#id")
     public CandidateEntity getCandidateById(Long id) {
         return candidateRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Candidate not found with ID: " + id));
     }
-
+    @Cacheable(value = "candidates", key = "#email")
     public CandidateEntity getCandidateByEmail(String email) {
         return candidateRepository.findByEmail(email).orElseThrow();
     }
+
+    @Transactional
+    @CachePut(value = "candidates", key = "#result.email")
+    @CacheEvict(value = {"candidatesList", "candidatesPage"}, allEntries = true)
     public CandidateEntity addCandidate(CandidateDto candidateDto) {
         CandidateEntity candidateEntity = modelMapper.map(candidateDto, CandidateEntity.class);
-        ArrayList<ArrayList> skillEntities = new ArrayList<>();
+        ArrayList<ArrayList<?>> skillEntities = new ArrayList<>();
         candidateEntity.setSkills(new ArrayList<>());
         candidateRepository.save(candidateEntity);
 
@@ -88,6 +100,16 @@ public class CandidateService {
         return candidateRepository.save(candidateEntity);
     }
 
+    @Transactional
+    @Caching(
+            evict = {
+                    @CacheEvict(value = "candidates", key = "#candidateEntity.id"),
+                    @CacheEvict(value = {"candidatesList", "candidatesPage"}, allEntries = true)
+            },
+            put = {
+                    @CachePut(value = "candidates", key = "#candidateDto.email")
+            }
+    )
     public CandidateEntity updateCandidate(CandidateDto candidateDto) {
         CandidateEntity candidateEntity = getCandidateByEmail(candidateDto.getEmail());
         ArrayList<ArrayList> skillEntities = new ArrayList<>();
@@ -126,6 +148,7 @@ public class CandidateService {
         return updateCandidate(candidateEntity, candidateDto);
     }
 
+    @Transactional
     public CandidateEntity updateCandidate(CandidateEntity candidate, CandidateDto updated) {
 
             candidate.setPhone(updated.getPhone());
@@ -186,6 +209,9 @@ public class CandidateService {
 //        candidateSkillRepository.saveAll(existing.getSkills());
 //        return candidateRepository.save(existing);
 //    }
+
+    @Transactional
+    @CacheEvict(value = {"candidates", "candidatesList", "candidatesPage"}, allEntries = true)
     public void deleteCandidate(Long id) {
         candidateRepository.deleteById(id);
     }
