@@ -19,13 +19,13 @@ public interface InvitationRepository extends JpaRepository<InvitationEntity, Lo
     @Query("SELECT i FROM InvitationEntity i WHERE i.job.user.email = :email AND i.recruiter.id != :userId")
     Optional<List<InvitationEntity>> findByJobUserId(@Param("userId") Long userId, @Param("email") String email);
     @Query("SELECT i FROM InvitationEntity i WHERE i.candidate.email = :email AND i.recruiter.id != :userId")
-    Optional<List<InvitationEntity>> findByCandidate(@Param("userId") Long userId, @Param("email") String email);
+    Optional<List<InvitationEntity>> findByCandidateEmailAndRecruiterId(@Param("userId") Long userId, @Param("email") String email);
     @Query("SELECT i FROM InvitationEntity i WHERE (i.candidate.email = :email OR i.job.user.email = :email) AND i.status = :status")
     Optional<List<InvitationEntity>> findByCandidate2(@Param("userId") Long userId, @Param("email") String email, InvitationStatus status);
     @Query("SELECT i FROM InvitationEntity i WHERE i.candidate.email = :email OR i.job.user.email = :email")
     Optional<List<InvitationEntity>> findByCandidateEmailOrJobUserEmail(@Param("userId") Long userId, @Param("email") String email);
     @Query("SELECT i FROM InvitationEntity i WHERE (i.candidate.id = :candidateId AND i.job.id = :jobId) ")
-    Optional<List<InvitationEntity>> findByCandidateEmailOrJobUserEmail2(@Param("candidateId") Long candidateId, @Param("jobId") Long jobId);
+    Optional<List<InvitationEntity>> findByCandidateIdAndJobId(@Param("candidateId") Long candidateId, @Param("jobId") Long jobId);
     @Modifying
     @Transactional
     @Query("UPDATE InvitationEntity i SET i.status = :status WHERE i.id = :id")
