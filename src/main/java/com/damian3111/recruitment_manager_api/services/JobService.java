@@ -12,12 +12,17 @@ import org.openapitools.model.JobDto;
 import org.openapitools.model.JobDtoSkillsInner;
 import org.openapitools.model.JobFilter;
 import org.springframework.boot.autoconfigure.batch.BatchProperties;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -38,25 +43,37 @@ public class JobService {
 
     private static final List<String> VALID_PROFICIENCY_LEVELS = List.of("Beginner", "Familiar", "Good", "Expert");
 
-    public Page<JobEntity> getCandidatesFiltered(JobFilter jobFilter, Pageable pageable) {
-        return jobRepository.findAll(getSpecification(jobFilter), pageable);
-    }
-
+//    @Cacheable(value = "jobsList", key = "'allJobs'")
     public List<JobEntity> getAllJobs() {
         return jobRepository.findAll();
     }
 
+//    @Cacheable(value = "jobsPage", key = "{#jobFilter, #pageable}")
+    public Page<JobEntity> getJobsFiltered(JobFilter jobFilter, Pageable pageable) {
+        return jobRepository.findAll(getSpecification(jobFilter), pageable);
+    }
+
+    @Cacheable(value = "jobsList", key = "'userId_' + #userId")
     public List<JobEntity> getJobsByUserId(Long userId) {
         return jobRepository.findByUserId(userId)
                 .orElseThrow(() -> new EntityNotFoundException("No jobs found for user ID: " + userId));
     }
 
+    @Cacheable(value = "jobs", key = "#id")
     public JobEntity getJobById(Long id) {
         return jobRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Job not found with ID: " + id));
     }
 
-
+    @Transactional
+    @Caching(
+            put = {
+                    @CachePut(value = "jobs", key = "#result.id")
+            },
+            evict = {
+                    @CacheEvict(value = {"jobsList", "jobsPage"}, allEntries = true)
+            }
+    )
     public JobEntity createJob(JobDto jobDto) {
         //TEMPORARY CONFIG
         JobEntity map = modelMapper.map(jobDto, JobEntity.class);
@@ -67,7 +84,7 @@ public class JobService {
         String name = SecurityContextHolder.getContext().getAuthentication().getName();
         UserEntity userEntity = userService.getUserByEmail(name);
 
-        ArrayList<ArrayList> skillEntities = new ArrayList<>();
+        ArrayList<ArrayList<?>> skillEntities = new ArrayList<>();
         map.setUser(userEntity);
         map.setSkills(new ArrayList<>());
         JobEntity jobEntity = jobRepository.save(map);
@@ -100,6 +117,15 @@ public class JobService {
         return jobEntity;
     }
 
+    @Transactional
+    @Caching(
+            put = {
+                    @CachePut(value = "jobs", key = "#id")
+            },
+            evict = {
+                    @CacheEvict(value = {"jobsList", "jobsPage"}, allEntries = true)
+            }
+    )
     public JobDto updateJob(Long id, JobDto jobDto) {
         JobEntity jobEntity = jobRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Job not found with ID: " + id));
@@ -151,6 +177,7 @@ public class JobService {
     }
 
     private void updateJobSkills(JobEntity job, List<JobSkill> newSkills) {
+        //TODO updateJobSkills implementation
     }
 
     private Specification<JobEntity> getSpecification(JobFilter filter) {
@@ -196,6 +223,9 @@ public class JobService {
                         .orElse(factory.empty()));
     }
 
+
+    @Transactional
+    @CacheEvict(value = {"jobs", "jobsList", "jobsPage"}, allEntries = true)
     public void deleteJob(Long id) {
         if (!jobRepository.existsById(id)) {
             throw new EntityNotFoundException("Job not found with ID: " + id);
