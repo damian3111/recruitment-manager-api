@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Component
@@ -28,7 +29,6 @@ public class CandidatesSpecification implements BaseSpecification<CandidateEntit
             return this.getPredicateAfterAppliedDate(cb, (Path<LocalDate>)pathToDate, search);
         };
     }
-
     private Predicate getPredicateBeforeAppliedDate(CriteriaBuilder cb, Path<LocalDate> path, LocalDate search) {
         return cb.lessThanOrEqualTo(path, search);
     }
@@ -47,7 +47,7 @@ public class CandidatesSpecification implements BaseSpecification<CandidateEntit
             Join<CandidateSkill, SkillEntity> skillJoin = candidateSkillJoin.join("skill");
 
             List<Predicate> predicates = skills.stream()
-                    .filter(skill -> skill.getName() != null) // Skip null names
+                    .filter(skill -> skill.getName() != null)
                     .map(skill -> {
                         Predicate namePredicate = cb.equal(
                                 cb.lower(skillJoin.get("name")),
