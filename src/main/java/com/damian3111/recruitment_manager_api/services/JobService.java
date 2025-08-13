@@ -53,7 +53,7 @@ public class JobService {
         return jobRepository.findAll(getSpecification(jobFilter), pageable);
     }
 
-    @Cacheable(value = "jobsList", key = "'userId_' + #userId")
+//    @Cacheable(value = "jobsList", key = "'userId_' + #userId")
     public List<JobEntity> getJobsByUserId(Long userId) {
         return jobRepository.findByUserId(userId)
                 .orElseThrow(() -> new EntityNotFoundException("No jobs found for user ID: " + userId));
@@ -65,19 +65,19 @@ public class JobService {
                 .orElseThrow(() -> new EntityNotFoundException("Job not found with ID: " + id));
     }
 
+//    @Caching(
+//            put = {
+//                    @CachePut(value = "jobs", key = "#result.id")
+//            },
+//            evict = {
+//                    @CacheEvict(value = {"jobsList", "jobsPage"}, allEntries = true)
+//            }
+//    )
     @Transactional
-    @Caching(
-            put = {
-                    @CachePut(value = "jobs", key = "#result.id")
-            },
-            evict = {
-                    @CacheEvict(value = {"jobsList", "jobsPage"}, allEntries = true)
-            }
-    )
     public JobEntity createJob(JobDto jobDto) {
         //TEMPORARY CONFIG
         JobEntity map = modelMapper.map(jobDto, JobEntity.class);
-        map.setCompanyName("sdds");
+        map.setCompanyName("tempCompanyName");
         map.setPostedDate(LocalDate.now());
         map.setApplicationDeadline(LocalDate.now());
 
@@ -117,15 +117,15 @@ public class JobService {
         return jobEntity;
     }
 
+//    @Caching(
+//            put = {
+//                    @CachePut(value = "jobs", key = "#id")
+//            },
+//            evict = {
+//                    @CacheEvict(value = {"jobsList", "jobsPage"}, allEntries = true)
+//            }
+//    )
     @Transactional
-    @Caching(
-            put = {
-                    @CachePut(value = "jobs", key = "#id")
-            },
-            evict = {
-                    @CacheEvict(value = {"jobsList", "jobsPage"}, allEntries = true)
-            }
-    )
     public JobDto updateJob(Long id, JobDto jobDto) {
         JobEntity jobEntity = jobRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Job not found with ID: " + id));
@@ -136,6 +136,15 @@ public class JobService {
 
         JobEntity updatedEntity = jobRepository.save(jobEntity);
         return mapToJobDto(updatedEntity);
+    }
+
+    @Transactional
+    @CacheEvict(value = {"jobs", "jobsList", "jobsPage"}, allEntries = true)
+    public void deleteJob(Long id) {
+        if (!jobRepository.existsById(id)) {
+            throw new EntityNotFoundException("Job not found with ID: " + id);
+        }
+        jobRepository.deleteById(id);
     }
 
     private List<JobSkill> mapSkills(List<JobDtoSkillsInner> skillDtos, JobEntity job) {
@@ -221,15 +230,5 @@ public class JobService {
                 .and(Optional.ofNullable(filter.getSkills())
                         .map(factory::propertyInSkills)
                         .orElse(factory.empty()));
-    }
-
-
-    @Transactional
-    @CacheEvict(value = {"jobs", "jobsList", "jobsPage"}, allEntries = true)
-    public void deleteJob(Long id) {
-        if (!jobRepository.existsById(id)) {
-            throw new EntityNotFoundException("Job not found with ID: " + id);
-        }
-        jobRepository.deleteById(id);
     }
 }

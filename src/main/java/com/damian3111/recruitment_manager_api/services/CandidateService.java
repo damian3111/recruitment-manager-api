@@ -51,13 +51,12 @@ public class CandidateService {
     public CandidateEntity getCandidateById(Long id) {
         return candidateRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Candidate not found with ID: " + id));
     }
-    @Cacheable(value = "candidates", key = "#email")
+//    @Cacheable(value = "candidates", key = "#email")
     public CandidateEntity getCandidateByEmail(String email) {
         return candidateRepository.findByEmail(email).orElseThrow();
     }
 
     @Transactional
-    @CachePut(value = "candidates", key = "#result.email")
     @CacheEvict(value = {"candidatesList", "candidatesPage"}, allEntries = true)
     public CandidateEntity addCandidate(CandidateDto candidateDto) {
         CandidateEntity candidateEntity = modelMapper.map(candidateDto, CandidateEntity.class);
@@ -100,16 +99,16 @@ public class CandidateService {
         return candidateRepository.save(candidateEntity);
     }
 
+//    @Caching(
+//            evict = {
+//                    @CacheEvict(value = "candidates", key = "#candidateEntity.id"),
+//                    @CacheEvict(value = {"candidatesList", "candidatesPage"}, allEntries = true)
+//            },
+//            put = {
+//                    @CachePut(value = "candidates", key = "#candidateDto.email")
+//            }
+//    )
     @Transactional
-    @Caching(
-            evict = {
-                    @CacheEvict(value = "candidates", key = "#candidateEntity.id"),
-                    @CacheEvict(value = {"candidatesList", "candidatesPage"}, allEntries = true)
-            },
-            put = {
-                    @CachePut(value = "candidates", key = "#candidateDto.email")
-            }
-    )
     public CandidateEntity updateCandidate(CandidateDto candidateDto) {
         CandidateEntity candidateEntity = getCandidateByEmail(candidateDto.getEmail());
         ArrayList<ArrayList> skillEntities = new ArrayList<>();
