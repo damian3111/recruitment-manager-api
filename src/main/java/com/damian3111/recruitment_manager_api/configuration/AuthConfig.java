@@ -72,6 +72,7 @@ public class AuthConfig {
                             "/api/auth/**",
                             "/api-auth/**",
                             "email/**",
+                            "/email/**",
                             "/test",
                             "/error"
                     ).permitAll();
