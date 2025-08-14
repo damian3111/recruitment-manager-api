@@ -42,7 +42,7 @@ public class CustomEmailService {
 
         confirmationTokenRepository.save(confirmationToken);
 
-        String link = "https://damiankwasny.pl/confirm-email?token=" + token;
+        String link = "https://damiankwasny.pl/confirm-email/" + token;
 
         try {
             sendHtmlEmail(
