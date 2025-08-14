@@ -28,7 +28,7 @@ public class EmailController implements EmailApi {
         if (optionalConfirmationToken.isEmpty()) {
             return ResponseEntity
                     .badRequest()
-                    .body("Incorrect token or account has already been activated");
+                    .body("You've passed incorrect token or your account has already been activated");
         }
 
         EmailConfirmationToken confirmationToken = optionalConfirmationToken.get();
@@ -42,6 +42,6 @@ public class EmailController implements EmailApi {
         userRepository.save(user);
         emailConfirmationTokenRepository.delete(confirmationToken);
 
-        return ResponseEntity.ok("Temporary Email Confirmation Page\n\n Message: Email confirmed");    }
+        return ResponseEntity.ok("Your email has been successfully verified");    }
 }
 
