@@ -42,7 +42,7 @@ public class CustomEmailService {
 
         confirmationTokenRepository.save(confirmationToken);
 
-        String link = "https://java-application-uo30.onrender.com/email/confirm-email?token=" + token;
+        String link = "https://damiankwasny.pl/confirm-email?token=" + token;
 
         try {
             sendHtmlEmail(
