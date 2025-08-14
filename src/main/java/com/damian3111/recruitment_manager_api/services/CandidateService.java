@@ -5,29 +5,22 @@ import com.damian3111.recruitment_manager_api.persistence.entities.CandidateSkil
 import com.damian3111.recruitment_manager_api.persistence.entities.SkillEntity;
 import com.damian3111.recruitment_manager_api.persistence.repositories.CandidateRepository;
 import com.damian3111.recruitment_manager_api.persistence.repositories.CandidateSkillRepository;
-import com.damian3111.recruitment_manager_api.persistence.repositories.SkillRepository;
 import com.damian3111.recruitment_manager_api.persistence.specification.CandidatesSpecification;
 import jakarta.persistence.EntityNotFoundException;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.openapitools.model.CandidateDto;
 import org.openapitools.model.CandidateFilter;
-import org.openapitools.model.JobDtoSkillsInner;
 import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -56,7 +49,6 @@ public class CandidateService {
         return candidateRepository.findByEmail(email).orElseThrow();
     }
 
-    @Transactional
     @CacheEvict(value = {"candidatesList", "candidatesPage"}, allEntries = true)
     public CandidateEntity addCandidate(CandidateDto candidateDto) {
         CandidateEntity candidateEntity = modelMapper.map(candidateDto, CandidateEntity.class);
@@ -108,7 +100,6 @@ public class CandidateService {
 //                    @CachePut(value = "candidates", key = "#candidateDto.email")
 //            }
 //    )
-    @Transactional
     public CandidateEntity updateCandidate(CandidateDto candidateDto) {
         CandidateEntity candidateEntity = getCandidateByEmail(candidateDto.getEmail());
         ArrayList<ArrayList> skillEntities = new ArrayList<>();
@@ -147,7 +138,6 @@ public class CandidateService {
         return updateCandidate(candidateEntity, candidateDto);
     }
 
-    @Transactional
     public CandidateEntity updateCandidate(CandidateEntity candidate, CandidateDto updated) {
 
             candidate.setPhone(updated.getPhone());
@@ -209,7 +199,6 @@ public class CandidateService {
 //        return candidateRepository.save(existing);
 //    }
 
-    @Transactional
     @CacheEvict(value = {"candidates", "candidatesList", "candidatesPage"}, allEntries = true)
     public void deleteCandidate(Long id) {
         candidateRepository.deleteById(id);

@@ -5,24 +5,18 @@ import com.damian3111.recruitment_manager_api.persistence.repositories.JobReposi
 import com.damian3111.recruitment_manager_api.persistence.repositories.JobSkillRepository;
 import com.damian3111.recruitment_manager_api.persistence.specification.JobSpecification;
 import jakarta.persistence.EntityNotFoundException;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.openapitools.model.JobDto;
 import org.openapitools.model.JobDtoSkillsInner;
 import org.openapitools.model.JobFilter;
-import org.springframework.boot.autoconfigure.batch.BatchProperties;
 import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -73,7 +67,7 @@ public class JobService {
 //                    @CacheEvict(value = {"jobsList", "jobsPage"}, allEntries = true)
 //            }
 //    )
-    @Transactional
+
     public JobEntity createJob(JobDto jobDto) {
         //TEMPORARY CONFIG
         JobEntity map = modelMapper.map(jobDto, JobEntity.class);
@@ -125,7 +119,6 @@ public class JobService {
 //                    @CacheEvict(value = {"jobsList", "jobsPage"}, allEntries = true)
 //            }
 //    )
-    @Transactional
     public JobDto updateJob(Long id, JobDto jobDto) {
         JobEntity jobEntity = jobRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Job not found with ID: " + id));
@@ -138,7 +131,6 @@ public class JobService {
         return mapToJobDto(updatedEntity);
     }
 
-    @Transactional
     @CacheEvict(value = {"jobs", "jobsList", "jobsPage"}, allEntries = true)
     public void deleteJob(Long id) {
         if (!jobRepository.existsById(id)) {
