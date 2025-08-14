@@ -4,12 +4,14 @@ import com.damian3111.recruitment_manager_api.persistence.entities.EmailConfirma
 import com.damian3111.recruitment_manager_api.persistence.entities.UserEntity;
 import com.damian3111.recruitment_manager_api.persistence.repositories.EmailConfirmationTokenRepository;
 import com.damian3111.recruitment_manager_api.persistence.repositories.UserRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.openapitools.api.EmailApi;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 @RequiredArgsConstructor
 @RestController
@@ -19,12 +21,20 @@ public class EmailController implements EmailApi {
     private final UserRepository userRepository;
 
     @Override
+    @Transactional
     public ResponseEntity<String> confirmEmail(String token) {
-        EmailConfirmationToken confirmationToken = emailConfirmationTokenRepository.findByToken(token)
-                .orElseThrow(() -> new RuntimeException("Temporary Email Confirmation Page\n\n Message: Invalid token"));
+        Optional<EmailConfirmationToken> optionalConfirmationToken = emailConfirmationTokenRepository.findByToken(token);
+
+        if (optionalConfirmationToken.isEmpty()) {
+            return ResponseEntity
+                    .badRequest()
+                    .body("Incorrect token or account has already been activated");
+        }
+
+        EmailConfirmationToken confirmationToken = optionalConfirmationToken.get();
 
         if (confirmationToken.getExpiresAt().isBefore(LocalDateTime.now())) {
-            return ResponseEntity.badRequest().body("Temporary Email Confirmation Page\n\n Message: Token expired");
+            return ResponseEntity.badRequest().body("Token expired");
         }
 
         UserEntity user = confirmationToken.getUser();
