@@ -49,7 +49,7 @@ public class CandidateService {
         return candidateRepository.findByEmail(email).orElseThrow();
     }
 
-    @CacheEvict(value = {"candidatesList", "candidatesPage"}, allEntries = true)
+    @CacheEvict(value = {"candidatesList"}, allEntries = true)
     public CandidateEntity addCandidate(CandidateDto candidateDto) {
         CandidateEntity candidateEntity = modelMapper.map(candidateDto, CandidateEntity.class);
         ArrayList<ArrayList<?>> skillEntities = new ArrayList<>();
