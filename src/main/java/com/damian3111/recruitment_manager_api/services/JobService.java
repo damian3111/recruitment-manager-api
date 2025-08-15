@@ -53,7 +53,7 @@ public class JobService {
                 .orElseThrow(() -> new EntityNotFoundException("No jobs found for user ID: " + userId));
     }
 
-    @Cacheable(value = "jobs", key = "#id")
+//    @Cacheable(value = "jobs", key = "#id")
     public JobEntity getJobById(Long id) {
         return jobRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Job not found with ID: " + id));
@@ -131,7 +131,7 @@ public class JobService {
         return mapToJobDto(updatedEntity);
     }
 
-    @CacheEvict(value = {"jobs", "jobsList", "jobsPage"}, allEntries = true)
+//    @CacheEvict(value = {"jobs", "jobsList", "jobsPage"}, allEntries = true)
     public void deleteJob(Long id) {
         if (!jobRepository.existsById(id)) {
             throw new EntityNotFoundException("Job not found with ID: " + id);

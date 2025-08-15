@@ -32,7 +32,7 @@ public class CandidateService {
     private final ModelMapper modelMapper;
     private final CandidatesSpecification candidatesSpecification;
 
-    @Cacheable(value = "candidatesList", key = "'allCandidates'")
+//    @Cacheable(value = "candidatesList", key = "'allCandidates'")
     public List<CandidateEntity> getAllCandidates() {
         return candidateRepository.findAll();
     }
@@ -40,7 +40,7 @@ public class CandidateService {
     public Page<CandidateEntity> getCandidatesFiltered(CandidateFilter filter, Pageable pageable) {
         return candidateRepository.findAll(getSpecification(filter), pageable);
     }
-    @Cacheable(value = "candidates", key = "#id")
+//    @Cacheable(value = "candidates", key = "#id")
     public CandidateEntity getCandidateById(Long id) {
         return candidateRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Candidate not found with ID: " + id));
     }
@@ -49,7 +49,7 @@ public class CandidateService {
         return candidateRepository.findByEmail(email).orElseThrow();
     }
 
-    @CacheEvict(value = {"candidatesList"}, allEntries = true)
+//    @CacheEvict(value = {"candidatesList"}, allEntries = true)
     public CandidateEntity addCandidate(CandidateDto candidateDto) {
         CandidateEntity candidateEntity = modelMapper.map(candidateDto, CandidateEntity.class);
         ArrayList<ArrayList<?>> skillEntities = new ArrayList<>();
@@ -199,7 +199,7 @@ public class CandidateService {
 //        return candidateRepository.save(existing);
 //    }
 
-    @CacheEvict(value = {"candidates", "candidatesList", "candidatesPage"}, allEntries = true)
+//    @CacheEvict(value = {"candidates", "candidatesList", "candidatesPage"}, allEntries = true)
     public void deleteCandidate(Long id) {
         candidateRepository.deleteById(id);
     }
