@@ -117,8 +117,10 @@ Docker
 ---
 ```
 API available at: http://localhost:8080
+https://github.com/damian3111/recruitment-manager-api
 
 Frontend available at: http://localhost:3000
+https://github.com/damian3111/recruitment-manager-ui  
 
 (Auto-generated API docs available via OpenAPI/Swagger UI)
 ```
