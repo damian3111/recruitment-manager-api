@@ -3,8 +3,9 @@
 # 🔗 Live Demo: [damiankwasny.pl](https://damiankwasny.pl)
 
 ### **Test User**
-**Email Address**: root2@gmail.com  
 
+**Role**: Recruiter  
+**Email Address**: root2@gmail.com  
 **Password**: tempPass123
 
 ---
@@ -38,6 +39,22 @@ The platform features secure authentication, skill-based matching, job & candida
 
 📊 Future Modules (UI-ready) – Analytics, Chats, Career Compass, Skill Matcher, Growth Tracker
 ```
+
+<img width="1851" height="958" alt="unknown_041" src="https://github.com/user-attachments/assets/e891d7a4-49d3-4445-a0ea-e4b7dae24fc3" />  
+
+<img width="1832" height="964" alt="unknown_038" src="https://github.com/user-attachments/assets/be9a10a3-03e9-4768-9863-0d7b12402307" />  
+
+ 
+<img width="1829" height="966" alt="unknown_039" src="https://github.com/user-attachments/assets/71f05394-3ae0-47bc-beef-0d07110983ae" />  
+
+
+<img width="1849" height="965" alt="unknown_040" src="https://github.com/user-attachments/assets/3aae4488-3f0d-4f6c-8b54-1b13f49f6db6" />  
+
+
+<img width="1848" height="963" alt="unknown_042" src="https://github.com/user-attachments/assets/9923c8c6-023f-4597-ab2c-2f347cba9aee" />  
+
+
+<img width="1834" height="964" alt="unknown_043" src="https://github.com/user-attachments/assets/215ff99b-6b3e-4a61-824f-68998c8d9dc6" />
 
 
 
