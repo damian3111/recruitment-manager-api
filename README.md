@@ -11,11 +11,7 @@
 ---
 🚀 Recruitment Matching Platform
 
-A full-stack recruitment platform connecting recruiters and candidates.
-Recruiters can create job offers, manage applications, and search for candidates, while candidates can build detailed profiles, showcase skills, and apply for jobs.
-
-The platform features secure authentication, skill-based matching, job & candidate filtering, invitation management, and much more.
-
+Recruitment Matching Platform — Full-stack web application that streamlines hiring by connecting recruiters and candidates. Recruiters create and manage job postings, track applications, and search talent; candidates build rich profiles, showcase skills, and apply with tailored submissions. Key capabilities include secure authentication, role-based dashboards, skill-based matching with relevance scoring, advanced filtering for jobs and candidates, invitation management, and activity tracking across the hiring funnel.
 
 ## **Core Features:**
 ```
