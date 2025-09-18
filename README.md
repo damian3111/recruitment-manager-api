@@ -1,6 +1,6 @@
 
 
-# 🔗 Live Demo: [damiankwasny.pl](https://damiankwasny.pl)
+# 🔗 Live Demo:
 
 ### **Test User**
 
